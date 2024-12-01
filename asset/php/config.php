@@ -9,7 +9,7 @@ ini_set('error_log', __DIR__ . '/../logs/error.log');
 
 // Database Configuration
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'education_platform');
+define('DB_NAME', 'nimru');
 define('DB_USER', 'root');         // Change in production
 define('DB_PASS', '');             // Change in production
 define('DB_CHARSET', 'utf8mb4');

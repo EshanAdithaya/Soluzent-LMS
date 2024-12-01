@@ -1,3 +1,53 @@
+<?php
+session_start();
+require_once 'asset/php/config.php';
+require_once 'asset/php/db.php';
+
+$response = ['success' => false, 'message' => ''];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
+    $password = $_POST['password'];
+    $remember = isset($_POST['remember']) ? true : false;
+
+    if (empty($email) || empty($password)) {
+        $response['message'] = 'Please fill in all fields';
+    } else {
+        try {
+            $stmt = $pdo->prepare('SELECT id, password, role FROM users WHERE email = ?');
+            $stmt->execute([$email]);
+            $user = $stmt->fetch();
+
+            if ($user && password_verify($password, $user['password'])) {
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['role'] = $user['role'];
+                
+                // Handle remember me functionality
+                if ($remember) {
+                    $token = bin2hex(random_bytes(32));
+                    $expires = date('Y-m-d H:i:s', strtotime('+30 days'));
+                    
+                    // Store remember me token in database
+                    $stmt = $pdo->prepare('INSERT INTO remember_tokens (user_id, token, expires) VALUES (?, ?, ?)');
+                    $stmt->execute([$user['id'], $token, $expires]);
+                    
+                    // Set cookie
+                    setcookie('remember_token', $token, strtotime('+30 days'), '/', '', true, true);
+                }
+
+                // Redirect based on role
+                header('Location: ' . ($user['role'] === 'admin' ? 'admin/dashboard.php' : 'student/Dashboard.php'));
+                exit;
+            } else {
+                $response['message'] = 'Invalid email or password';
+            }
+        } catch (PDOException $e) {
+            $response['message'] = 'Database error occurred';
+            error_log($e->getMessage());
+        }
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,12 +65,19 @@
                 <p class="mt-2 text-sm text-gray-600">Please sign in to your account</p>
             </div>
 
+            <?php if (!empty($response['message'])): ?>
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <span class="block sm:inline"><?php echo htmlspecialchars($response['message']); ?></span>
+            </div>
+            <?php endif; ?>
+
             <!-- Login Form -->
-            <form class="mt-8 space-y-6" id="loginForm">
+            <form class="mt-8 space-y-6" method="POST" action="">
                 <div class="space-y-4">
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
                         <input id="email" name="email" type="email" required 
+                            value="<?php echo isset($email) ? htmlspecialchars($email) : ''; ?>"
                             class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
 
@@ -46,7 +103,7 @@
                 </div>
 
                 <div>
-                    <button type="submit" id="submitBtn"
+                    <button type="submit"
                         class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Sign in
                     </button>
@@ -63,93 +120,5 @@
             </div>
         </div>
     </div>
-
-    <script>
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const submitBtn = document.getElementById('submitBtn');
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-
-            // Basic validation
-            if (!email || !password) {
-                alert('Please fill in all fields');
-                return;
-            }
-
-            try {
-                submitBtn.textContent = 'Signing in...';
-                submitBtn.disabled = true;
-
-                const response = await fetch('', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ email, password }),
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    window.location.href = data.role === 'admin' ? 'admin/dashboard.php' : 'student/dashboard.php';
-                } else {
-                    alert(data.message || 'Invalid credentials');
-                }
-            } catch (error) {
-                alert('An error occurred. Please try again.');
-            } finally {
-                submitBtn.textContent = 'Sign in';
-                submitBtn.disabled = false;
-            }
-        });
-    </script>
 </body>
 </html>
-
-
-
-<?php
-// auth/login.php
-
-session_start();
-require_once '../includes/config.php';
-require_once '../includes/db.php';
-
-// Get JSON input
-$data = json_decode(file_get_contents('php://input'), true);
-$response = ['success' => false];
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = filter_var($data['email'], FILTER_SANITIZE_EMAIL);
-    $password = $data['password'];
-
-    if (empty($email) || empty($password)) {
-        $response['message'] = 'Please fill in all fields';
-        echo json_encode($response);
-        exit;
-    }
-
-    try {
-        $stmt = $pdo->prepare('SELECT id, password, role FROM users WHERE email = ?');
-        $stmt->execute([$email]);
-        $user = $stmt->fetch();
-
-        if ($user && password_verify($password, $user['password'])) {
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['role'] = $user['role'];
-            
-            $response = [
-                'success' => true,
-                'role' => $user['role']
-            ];
-        } else {
-            $response['message'] = 'Invalid email or password';
-        }
-    } catch (PDOException $e) {
-        $response['message'] = 'Database error occurred';
-        // Log the error: error_log($e->getMessage());
-    }
-}
-
-echo json_encode($response);

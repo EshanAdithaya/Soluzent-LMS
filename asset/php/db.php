@@ -2,7 +2,7 @@
 // includes/db.php
 
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'education_platform');
+define('DB_NAME', 'nimru');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 
