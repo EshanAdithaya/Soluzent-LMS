@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <h1 class="text-xl font-bold text-indigo-600">EduPortal</h1>
+                    </div>
+                </div>
+                
+                <div class="flex items-center">
+                    <div class="ml-3 relative">
+                        <div class="flex items-center space-x-4">
+                            <span id="studentName" class="text-gray-700"></span>
+                            <button id="logoutBtn" class="text-gray-600 hover:text-gray-900">Logout</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <!-- Welcome Section -->
+        <div class="px-4 py-5 sm:px-6">
+            <h2 class="text-2xl font-bold text-gray-900">Welcome back, <span id="welcomeName"></span></h2>
+            <p class="mt-1 text-sm text-gray-600">Here are your enrolled classes and materials</p>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-3">
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <dt class="text-sm font-medium text-gray-500 truncate">Enrolled Classes</dt>
+                    <dd id="enrolledCount" class="mt-1 text-3xl font-semibold text-gray-900">0</dd>
+                </div>
+            </div>
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <dt class="text-sm font-medium text-gray-500 truncate">Available Materials</dt>
+                    <dd id="materialsCount" class="mt-1 text-3xl font-semibold text-gray-900">0</dd>
+                </div>
+            </div>
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <dt class="text-sm font-medium text-gray-500 truncate">Last Access</dt>
+                    <dd id="lastAccess" class="mt-1 text-3xl font-semibold text-gray-900">Today</dd>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enrolled Classes -->
+        <div class="mt-8">
+            <h3 class="text-lg font-medium text-gray-900">Your Classes</h3>
+            <div class="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" id="classesList">
+                <!-- Classes will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Recent Materials -->
+        <div class="mt-8">
+            <h3 class="text-lg font-medium text-gray-900">Recent Materials</h3>
+            <div class="mt-4" id="materialsList">
+                <!-- Materials will be inserted here -->
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Fetch student data and update UI
+        async function fetchDashboardData() {
+            try {
+                const response = await fetch('api/student-dashboard.php');
+                const data = await response.json();
+
+                if (data.success) {
+                    updateDashboard(data);
+                } else {
+                    alert('Error loading dashboard data');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function updateDashboard(data) {
+            // Update welcome section
+            document.getElementById('studentName').textContent = data.name;
+            document.getElementById('welcomeName').textContent = data.name;
+
+            // Update stats
+            document.getElementById('enrolledCount').textContent = data.enrolledClasses.length;
+            document.getElementById('materialsCount').textContent = data.totalMaterials;
+            document.getElementById('lastAccess').textContent = data.lastAccess;
+
+            // Update classes list
+            const classesList = document.getElementById('classesList');
+            classesList.innerHTML = data.enrolledClasses.map(course => `
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h4 class="text-lg font-medium text-gray-900">${course.name}</h4>
+                    <p class="mt-2 text-sm text-gray-600">${course.description}</p>
+                    <div class="mt-4">
+                        <a href="class.php?id=${course.id}" 
+                           class="text-indigo-600 hover:text-indigo-900">
+                            View materials →
+                        </a>
+                    </div>
+                </div>
+            `).join('');
+
+            // Update materials list
+            const materialsList = document.getElementById('materialsList');
+            materialsList.innerHTML = data.recentMaterials.map(material => `
+                <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-4">
+                    <div class="px-4 py-4 sm:px-6">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-md font-medium text-gray-900">${material.title}</h4>
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                       ${getTypeColor(material.type)}">
+                                ${material.type}
+                            </span>
+                        </div>
+                        <div class="mt-2 flex justify-between">
+                            <p class="text-sm text-gray-600">${material.class_name}</p>
+                            <a href="${material.content}" class="text-sm text-indigo-600 hover:text-indigo-900">
+                                Access Material
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getTypeColor(type) {
+            const colors = {
+                'pdf': 'bg-red-100 text-red-800',
+                'link': 'bg-blue-100 text-blue-800',
+                'image': 'bg-green-100 text-green-800'
+            };
+            return colors[type] || 'bg-gray-100 text-gray-800';
+        }
+
+        // Handle logout
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('auth/logout.php');
+                const data = await response.json();
+                if (data.success) {
+                    window.location.href = 'login.php';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+
+        // Load dashboard data on page load
+        document.addEventListener('DOMContentLoaded', fetchDashboardData);
+    </script>
+</body>
+</html>
