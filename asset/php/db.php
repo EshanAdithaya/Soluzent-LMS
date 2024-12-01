@@ -6,6 +6,7 @@ define('DB_NAME', 'nimru');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 
+session_start();
 try {
     $pdo = new PDO(
         "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",

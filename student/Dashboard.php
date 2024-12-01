@@ -8,26 +8,7 @@
 </head>
 <body class="bg-gray-50">
     <!-- Navigation -->
-    <nav class="bg-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="flex justify-between h-16">
-                <div class="flex">
-                    <div class="flex-shrink-0 flex items-center">
-                        <h1 class="text-xl font-bold text-indigo-600">EduPortal</h1>
-                    </div>
-                </div>
-                
-                <div class="flex items-center">
-                    <div class="ml-3 relative">
-                        <div class="flex items-center space-x-4">
-                            <span id="studentName" class="text-gray-700"></span>
-                            <button id="logoutBtn" class="text-gray-600 hover:text-gray-900">Logout</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
+<?php require_once 'student-header.php'; ?>
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -171,15 +152,15 @@
 
 
 <?php
-// api/student-dashboard.php
 
-session_start();
-require_once '../includes/config.php';
-require_once '../includes/db.php';
+
+
+require_once '../asset/php/config.php';
+require_once '../asset/php/db.php';
 
 // Check if user is logged in and is a student
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'student') {
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+    // echo '<script>alert("Please login to access the dashboard."); window.location.href = "../login.php";</script>';
     exit;
 }
 
