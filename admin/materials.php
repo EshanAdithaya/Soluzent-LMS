@@ -63,11 +63,14 @@ function handleVideoUrl($url) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo->beginTransaction();
+        error_log("Transaction started");
 
         switch ($_POST['action']) {
             case 'create':
+                error_log("Create action initiated");
                 switch ($_POST['materialType']) {
                     case 'video':
+                        error_log("Video material type selected");
                         if (!isset($_FILES['video']) || $_FILES['video']['error'] !== 0) {
                             throw new Exception('Video file is required.');
                         }
@@ -90,6 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $_POST['title'],
                                 $_POST['description'] ?? ''
                             );
+                            error_log("Video uploaded successfully");
                     
                             $stmt = $pdo->prepare("
                                 INSERT INTO materials (
@@ -108,12 +112,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $videoDetails['video_id'],
                                 $videoDetails['embed_url']
                             ]);
+                            error_log("Video material inserted into database");
                         } catch (Exception $e) {
                             throw new Exception("Failed to upload video: " . $e->getMessage());
                         }
                         break;
 
                     case 'link':
+                        error_log("Link material type selected");
                         if (empty($_POST['content'])) {
                             throw new Exception('URL is required.');
                         }
@@ -127,9 +133,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $_POST['title'],
                             $_POST['content']
                         ]);
+                        error_log("Link material inserted into database");
                         break;
 
                     case 'file':
+                        error_log("File material type selected");
                         if (!isset($_FILES['file']) || $_FILES['file']['error'] !== 0) {
                             throw new Exception('File is required.');
                         }
@@ -145,12 +153,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $_POST['type'],
                             $fileName
                         ]);
+                        error_log("File material inserted into database");
                         break;
                 }
                 $_SESSION['success'] = "Material added successfully.";
                 break;
 
             case 'update':
+                error_log("Update action initiated");
                 $type = $_POST['materialType'];
                 $content = $_POST['content'] ?? '';
 
@@ -171,6 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $_POST['class_id'],
                             $_POST['material_id']
                         ]);
+                        error_log("Video material updated in database");
                     }
                 } else if ($type === 'file' && isset($_FILES['file']) && $_FILES['file']['error'] === 0) {
                     // Delete old file
@@ -204,10 +215,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $params[] = $_POST['material_id'];
                 
                 $stmt->execute($params);
+                error_log("Material updated in database");
                 $_SESSION['success'] = "Material updated successfully.";
                 break;
 
             case 'delete':
+                error_log("Delete action initiated");
                 // Get file info before deletion
                 $stmt = $pdo->prepare("SELECT content, type FROM materials WHERE id = ?");
                 $stmt->execute([$_POST['material_id']]);
@@ -223,13 +236,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $stmt = $pdo->prepare("DELETE FROM materials WHERE id = ?");
                 $stmt->execute([$_POST['material_id']]);
+                error_log("Material deleted from database");
                 $_SESSION['success'] = "Material deleted successfully.";
                 break;
         }
 
         $pdo->commit();
+        error_log("Transaction committed");
     } catch (Exception $e) {
         $pdo->rollBack();
+        error_log("Transaction rolled back: " . $e->getMessage());
         $_SESSION['error'] = $e->getMessage();
     }
 
@@ -245,10 +261,12 @@ $stmt = $pdo->query("
     ORDER BY m.created_at DESC
 ");
 $materials = $stmt->fetchAll();
+error_log("Fetched all materials");
 
 // Fetch all classes for the dropdown
 $stmt = $pdo->query("SELECT id, name FROM classes ORDER BY name");
 $classes = $stmt->fetchAll();
+error_log("Fetched all classes");
 ?>
 
 <!DOCTYPE html>
