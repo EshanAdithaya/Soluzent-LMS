@@ -12,6 +12,7 @@ require_once '../asset/php/youtube_api.php';
 
 // Handle file uploads
 function handleFileUpload($file) {
+    error_log("handleFileUpload called");
     $targetDir = "../uploads/materials/";
     if (!file_exists($targetDir)) {
         mkdir($targetDir, 0777, true);
@@ -41,6 +42,7 @@ function handleFileUpload($file) {
 
 // Handle video upload and generate embed URL
 function handleVideoUrl($url) {
+    error_log("handleVideoUrl called with URL: " . $url);
     // Extract YouTube video ID from different URL formats
     $videoId = '';
     
