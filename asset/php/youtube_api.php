@@ -1,5 +1,9 @@
 <?php
-require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
+use Google\Service\Exception as Google_Service_Exception;
+use Google\Exception as Google_Exception;
+
+
 
 class YouTubeUploader {
     private $client;
@@ -9,7 +13,7 @@ class YouTubeUploader {
         $this->client = new Google_Client();
         
         // Load credentials from downloaded JSON file
-        $this->client->setAuthConfig('client_secrets.json');
+        $this->client->setAuthConfig(__DIR__ . '/../../client_secrets.json');
         $this->client->setAccessType('offline');
         $this->client->setScopes([
             'https://www.googleapis.com/auth/youtube.upload',

@@ -1,0 +1,10 @@
+[02-Dec-2024 10:52:53 Europe/Berlin] PHP Warning:  require_once(../asset/php/config.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\github\nimru-Web\admin\materials.php on line 9
+[02-Dec-2024 10:52:53 Europe/Berlin] PHP Fatal error:  Uncaught Error: Failed opening required '../asset/php/config.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\github\nimru-Web\admin\materials.php:9
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\admin\materials.php on line 9
+[02-Dec-2024 10:54:14 Europe/Berlin] PHP Warning:  require_once(C:\xampp\htdocs\github\nimru-Web\admin../asset/php/config.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\github\nimru-Web\admin\materials.php on line 9
+[02-Dec-2024 10:54:14 Europe/Berlin] PHP Fatal error:  Uncaught Error: Failed opening required 'C:\xampp\htdocs\github\nimru-Web\admin../asset/php/config.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\github\nimru-Web\admin\materials.php:9
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\admin\materials.php on line 9

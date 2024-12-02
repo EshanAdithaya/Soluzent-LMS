@@ -1,11 +1,71 @@
 <?php
-// admin/dashboard.php
-// session_start();
-// require_once '../includes/config.php';
-// require_once '../includes/db.php';
-require_once 'admin-header.php';
-?>
+session_start();
 
+require '../asset/php/config.php';
+require '../asset/php/db.php';
+
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+    exit;
+}
+
+try {
+    // Prepare statements for secure data fetching
+    $stmt = $pdo->prepare('SELECT COUNT(*) FROM users WHERE role = :role');
+    $stmt->execute(['role' => 'student']);
+    $totalStudents = $stmt->fetchColumn();
+
+    $stmt = $pdo->prepare('SELECT COUNT(*) FROM classes');
+    $stmt->execute();
+    $activeClasses = $stmt->fetchColumn();
+
+    $stmt = $pdo->prepare('SELECT COUNT(*) FROM materials');
+    $stmt->execute();
+    $totalMaterials = $stmt->fetchColumn();
+
+    $stmt = $pdo->prepare('
+        SELECT COUNT(*) FROM users 
+        WHERE role = :role 
+        AND created_at >= DATE_SUB(NOW(), INTERVAL 1 WEEK)
+    ');
+    $stmt->execute(['role' => 'student']);
+    $newStudents = $stmt->fetchColumn();
+
+    $stmt = $pdo->prepare('
+        SELECT name, email, DATE_FORMAT(created_at, "%Y-%m-%d") as joined_date
+        FROM users 
+        WHERE role = :role
+        ORDER BY created_at DESC 
+        LIMIT 5
+    ');
+    $stmt->execute(['role' => 'student']);
+    $recentStudents = $stmt->fetchAll();
+
+    $stmt = $pdo->prepare('
+        SELECT m.title, m.type, c.name as class_name
+        FROM materials m
+        JOIN classes c ON m.class_id = c.id
+        ORDER BY m.created_at DESC
+        LIMIT 5
+    ');
+    $stmt->execute();
+    $recentMaterials = $stmt->fetchAll();
+
+    echo json_encode([
+        'success' => true,
+        'totalStudents' => $totalStudents,
+        'activeClasses' => $activeClasses,
+        'totalMaterials' => $totalMaterials,
+        'newStudents' => $newStudents,
+        'recentStudents' => $recentStudents,
+        'recentMaterials' => $recentMaterials
+    ]);
+} catch (PDOException $e) {
+    echo json_encode(['success' => false, 'message' => 'Database error']);
+    error_log($e->getMessage());
+}
+?>
+<?php require_once 'admin-header.php'; ?>
 <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
     <!-- Welcome Section -->
     <div class="px-4 py-5 sm:px-6">
@@ -68,7 +128,10 @@ require_once 'admin-header.php';
 <script>
     async function fetchDashboardData() {
         try {
-            const response = await fetch('api/admin-dashboard.php');
+            const response = await fetch('dashboard.php');
+            if (!response.ok) {
+                throw new Error('Failed to load data: ' + response.statusText);
+            }
             const data = await response.json();
 
             if (data.success) {
@@ -78,6 +141,7 @@ require_once 'admin-header.php';
             }
         } catch (error) {
             console.error('Error:', error);
+            alert('An error occurred while fetching data');
         }
     }
 
@@ -118,73 +182,3 @@ require_once 'admin-header.php';
     // Load dashboard data on page load
     document.addEventListener('DOMContentLoaded', fetchDashboardData);
 </script>
-
-
-<?php
-// admin/api/admin-dashboard.php
-
-session_start();
-require_once '../../includes/config.php';
-require_once '../../includes/db.php';
-
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-    exit;
-}
-
-try {
-    // Get total students
-    $stmt = $pdo->query('SELECT COUNT(*) FROM users WHERE role = "student"');
-    $totalStudents = $stmt->fetchColumn();
-
-    // Get active classes
-    $stmt = $pdo->query('SELECT COUNT(*) FROM classes');
-    $activeClasses = $stmt->fetchColumn();
-
-    // Get total materials
-    $stmt = $pdo->query('SELECT COUNT(*) FROM materials');
-    $totalMaterials = $stmt->fetchColumn();
-
-    // Get new students this week
-    $stmt = $pdo->query('
-        SELECT COUNT(*) FROM users 
-        WHERE role = "student" 
-        AND created_at >= DATE_SUB(NOW(), INTERVAL 1 WEEK)
-    ');
-    $newStudents = $stmt->fetchColumn();
-
-    // Get recent students
-    $stmt = $pdo->query('
-        SELECT name, email, DATE_FORMAT(created_at, "%Y-%m-%d") as joined_date
-        FROM users 
-        WHERE role = "student"
-        ORDER BY created_at DESC 
-        LIMIT 5
-    ');
-    $recentStudents = $stmt->fetchAll();
-
-    // Get recent materials
-    $stmt = $pdo->query('
-        SELECT m.title, m.type, c.name as class_name
-        FROM materials m
-        JOIN classes c ON m.class_id = c.id
-        ORDER BY m.created_at DESC
-        LIMIT 5
-    ');
-    $recentMaterials = $stmt->fetchAll();
-
-    echo json_encode([
-        'success' => true,
-        'totalStudents' => $totalStudents,
-        'activeClasses' => $activeClasses,
-        'totalMaterials' => $totalMaterials,
-        'newStudents' => $newStudents,
-        'recentStudents' => $recentStudents,
-        'recentMaterials' => $recentMaterials
-    ]);
-
-} catch (PDOException $e) {
-    echo json_encode(['success' => false, 'message' => 'Database error']);
-    error_log($e->getMessage());
-}
-?>

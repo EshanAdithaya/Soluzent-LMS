@@ -1,6 +1,6 @@
 <?php
-require_once '../asset/php/config.php';
-require_once '../asset/php/db.php';
+require_once __DIR__ . '/../asset/php/config.php';
+require_once __DIR__ . '/../asset/php/db.php';
 
 // Get class ID from URL
 $class_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;

@@ -101,7 +101,7 @@ session_start();
         if (logoutBtn) {
             logoutBtn.addEventListener('click', async () => {
                 try {
-                    const response = await fetch('auth/logout.php');
+                    const response = await fetch('asset/php/logout.php');
                     const data = await response.json();
                     if (data.success) {
                         window.location.href = 'index.php';

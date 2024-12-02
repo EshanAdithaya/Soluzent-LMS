@@ -1,3 +1,77 @@
+<?php
+
+
+
+require_once __DIR__ . '/../asset/php/config.php';
+
+
+// Check if user is logged in and is a student
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'student') {
+    // echo '<script>alert("Please login to access the dashboard."); window.location.href = "../login.php";</script>';
+    exit;
+}
+
+try {
+    $userId = $_SESSION['user_id'];
+
+    // Get student info
+    $stmt = $pdo->prepare('SELECT name FROM users WHERE id = ?');
+    $stmt->execute([$userId]);
+    $user = $stmt->fetch();
+
+    // Get enrolled classes
+    $stmt = $pdo->prepare('
+        SELECT c.id, c.name, c.description
+        FROM classes c
+        JOIN enrollments e ON c.id = e.class_id
+        WHERE e.student_id = ?
+    ');
+    $stmt->execute([$userId]);
+    $classes = $stmt->fetchAll();
+
+    // Get recent materials
+    $stmt = $pdo->prepare('
+        SELECT m.id, m.title, m.type, m.content, c.name as class_name
+        FROM materials m
+        JOIN classes c ON m.class_id = c.id
+        JOIN enrollments e ON c.id = e.class_id
+        WHERE e.student_id = ?
+        ORDER BY m.created_at DESC
+        LIMIT 5
+    ');
+    $stmt->execute([$userId]);
+    $materials = $stmt->fetchAll();
+
+    // Count total materials
+    $stmt = $pdo->prepare('
+        SELECT COUNT(*) as total
+        FROM materials m
+        JOIN classes c ON m.class_id = c.id
+        JOIN enrollments e ON c.id = e.class_id
+        WHERE e.student_id = ?
+    ');
+    $stmt->execute([$userId]);
+    $totalMaterials = $stmt->fetch()['total'];
+
+    // Update last access time
+    $stmt = $pdo->prepare('UPDATE users SET last_access = NOW() WHERE id = ?');
+    $stmt->execute([$userId]);
+
+    echo json_encode([
+        'success' => true,
+        'name' => $user['name'],
+        'enrolledClasses' => $classes,
+        'recentMaterials' => $materials,
+        'totalMaterials' => $totalMaterials,
+        'lastAccess' => date('Y-m-d H:i:s')
+    ]);
+
+} catch (PDOException $e) {
+    echo json_encode(['success' => false, 'message' => 'Database error']);
+    error_log($e->getMessage());
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -61,7 +135,7 @@
         // Fetch student data and update UI
         async function fetchDashboardData() {
             try {
-                const response = await fetch('api/student-dashboard.php');
+                const response = await fetch('Dashboard.php');
                 const data = await response.json();
 
                 if (data.success) {
@@ -151,76 +225,3 @@
 </html>
 
 
-<?php
-
-
-
-require_once '../asset/php/config.php';
-require_once '../asset/php/db.php';
-
-// Check if user is logged in and is a student
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'student') {
-    // echo '<script>alert("Please login to access the dashboard."); window.location.href = "../login.php";</script>';
-    exit;
-}
-
-try {
-    $userId = $_SESSION['user_id'];
-
-    // Get student info
-    $stmt = $pdo->prepare('SELECT name FROM users WHERE id = ?');
-    $stmt->execute([$userId]);
-    $user = $stmt->fetch();
-
-    // Get enrolled classes
-    $stmt = $pdo->prepare('
-        SELECT c.id, c.name, c.description
-        FROM classes c
-        JOIN enrollments e ON c.id = e.class_id
-        WHERE e.student_id = ?
-    ');
-    $stmt->execute([$userId]);
-    $classes = $stmt->fetchAll();
-
-    // Get recent materials
-    $stmt = $pdo->prepare('
-        SELECT m.id, m.title, m.type, m.content, c.name as class_name
-        FROM materials m
-        JOIN classes c ON m.class_id = c.id
-        JOIN enrollments e ON c.id = e.class_id
-        WHERE e.student_id = ?
-        ORDER BY m.created_at DESC
-        LIMIT 5
-    ');
-    $stmt->execute([$userId]);
-    $materials = $stmt->fetchAll();
-
-    // Count total materials
-    $stmt = $pdo->prepare('
-        SELECT COUNT(*) as total
-        FROM materials m
-        JOIN classes c ON m.class_id = c.id
-        JOIN enrollments e ON c.id = e.class_id
-        WHERE e.student_id = ?
-    ');
-    $stmt->execute([$userId]);
-    $totalMaterials = $stmt->fetch()['total'];
-
-    // Update last access time
-    $stmt = $pdo->prepare('UPDATE users SET last_access = NOW() WHERE id = ?');
-    $stmt->execute([$userId]);
-
-    echo json_encode([
-        'success' => true,
-        'name' => $user['name'],
-        'enrolledClasses' => $classes,
-        'recentMaterials' => $materials,
-        'totalMaterials' => $totalMaterials,
-        'lastAccess' => date('Y-m-d H:i:s')
-    ]);
-
-} catch (PDOException $e) {
-    echo json_encode(['success' => false, 'message' => 'Database error']);
-    error_log($e->getMessage());
-}
-?>

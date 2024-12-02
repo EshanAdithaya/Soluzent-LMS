@@ -1,8 +1,14 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+ini_set('log_errors', 1);
+ini_set('error_log', 'asset/php/php-error.log'); // Change to your log file path
 session_start();
-require_once '../asset/php/config.php';
-require_once '../asset/php/db.php';
-require_once '../asset/php/youtube_api.php';
+
+require_once __DIR__ . '/../asset/php/config.php';
+
+require_once __DIR__ . '/../asset/php/youtube_api.php';
 
 // Check admin authentication
 // if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
@@ -13,7 +19,7 @@ require_once '../asset/php/youtube_api.php';
 // Handle file uploads
 function handleFileUpload($file) {
     error_log("handleFileUpload called");
-    $targetDir = "../uploads/materials/";
+    $targetDir = "../asset/uploads/materials/";
     if (!file_exists($targetDir)) {
         mkdir($targetDir, 0777, true);
     }
@@ -62,7 +68,7 @@ function handleVideoUrl($url) {
 }
 
 // Handle form submissions
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo->beginTransaction();
         error_log("Transaction started");
@@ -562,16 +568,26 @@ error_log("Fetched all classes");
         }
 
         function openAddModal() {
+            document.getElementById('materialModal').classList.remove('hidden');
             document.getElementById('modalTitle').textContent = 'Add New Material';
             document.getElementById('formAction').value = 'create';
             document.getElementById('materialId').value = '';
             document.getElementById('materialForm').reset();
-            document.querySelector('input[name="materialType"][value="link"]').checked = true;
-            toggleMaterialType('link');
-            document.getElementById('materialModal').classList.remove('hidden');
+            document.querySelector(`input[name="materialType"][value="${material.type}"]`).checked = true;
+            
+            if (material.type === 'video') {
+                document.getElementById('videoUrl').value = material.content;
+            } else if (material.type === 'link') {
+                document.getElementById('content').value = material.content;
+            }
+            
+            toggleMaterialType(material.type);
+           
         }
 
         function openEditModal(material) {
+            document.getElementById('materialModal').classList.remove('hidden');
+
             document.getElementById('modalTitle').textContent = 'Edit Material';
             document.getElementById('formAction').value = 'update';
             document.getElementById('materialId').value = material.id;
@@ -588,7 +604,6 @@ error_log("Fetched all classes");
             }
             
             toggleMaterialType(material.type);
-            document.getElementById('materialModal').classList.remove('hidden');
         }
 
         function closeModal() {
