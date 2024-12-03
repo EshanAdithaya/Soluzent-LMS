@@ -1,0 +1,42 @@
+[03-Dec-2024 14:32:08 Europe/Berlin] -------------- Starting Dashboard Load --------------
+[03-Dec-2024 14:32:08 Europe/Berlin] Session data: Array
+(
+    [user_id] => 2
+    [role] => student
+    [name] => qwe
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:32:29 Europe/Berlin] -------------- Starting Dashboard Load --------------
+[03-Dec-2024 14:32:29 Europe/Berlin] Session data: Array
+(
+    [user_id] => 2
+    [role] => student
+    [name] => qwe
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:37:35 Europe/Berlin] Session started with data: Array
+(
+    [user_id] => 2
+    [role] => student
+    [name] => qwe
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:37:48 Europe/Berlin] Session started with data: Array
+(
+    [user_id] => 2
+    [role] => student
+    [name] => qwe
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:42:54 Europe/Berlin] Session started with data: Array
+(
+    [user_id] => 2
+    [role] => student
+    [name] => qwe
+    [login_success] => 1
+)
+
