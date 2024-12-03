@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "33cd0486d20706aeee024e595cfd4bd8",
+    "content-hash": "12c8cd2130d919208c860c97fbacc89b",
     "packages": [
         {
             "name": "firebase/php-jwt",
@@ -140,23 +140,23 @@
         },
         {
             "name": "google/apiclient-services",
-            "version": "v0.384.0",
+            "version": "v0.312.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/googleapis/google-api-php-client-services.git",
-                "reference": "fcb190bb02cea2c939e67867bf9122fd8d02c351"
+                "reference": "d13797cf251ec0d62f00b70dfa8642aa9550900d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/googleapis/google-api-php-client-services/zipball/fcb190bb02cea2c939e67867bf9122fd8d02c351",
-                "reference": "fcb190bb02cea2c939e67867bf9122fd8d02c351",
+                "url": "https://api.github.com/repos/googleapis/google-api-php-client-services/zipball/d13797cf251ec0d62f00b70dfa8642aa9550900d",
+                "reference": "d13797cf251ec0d62f00b70dfa8642aa9550900d",
                 "shasum": ""
             },
             "require": {
-                "php": "^8.0"
+                "php": "^7.4||^8.0"
             },
             "require-dev": {
-                "phpunit/phpunit": "^9.6"
+                "phpunit/phpunit": "^5.7||^8.5.13"
             },
             "type": "library",
             "autoload": {
@@ -178,9 +178,9 @@
             ],
             "support": {
                 "issues": "https://github.com/googleapis/google-api-php-client-services/issues",
-                "source": "https://github.com/googleapis/google-api-php-client-services/tree/v0.384.0"
+                "source": "https://github.com/googleapis/google-api-php-client-services/tree/v0.312.1"
             },
-            "time": "2024-11-27T01:08:46+00:00"
+            "time": "2023-08-21T00:52:13+00:00"
         },
         {
             "name": "google/auth",
