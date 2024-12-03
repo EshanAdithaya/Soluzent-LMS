@@ -17,7 +17,7 @@ define('DB_PORT', 25060);
 
 // Application Settings
 define('APP_NAME', 'EduPortal');
-define('APP_URL', 'https://your-production-domain.com'); // Change to your live domain
+define('APP_URL', 'https://plankton-app-us3aj.ondigitalocean.app'); // Change to your live domain
 define('ADMIN_EMAIL', 'admin@your-domain.com');
 
 // Session Configuration
@@ -51,24 +51,6 @@ define('HASH_COST', 12); // For password hashing
 
 // Time Zone
 date_default_timezone_set('UTC');
-
-// Create database connection
-try {
-    $pdo = new PDO(
-        "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET,
-        DB_USER,
-        DB_PASS,
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false,
-            PDO::MYSQL_ATTR_SSL_CA => '/etc/ssl/cert.pem', // Ensure SSL for secure DB connection
-        ]
-    );
-} catch (PDOException $e) {
-    error_log("Database Connection Error: " . $e->getMessage());
-    die("Connection failed. Please try again later.");
-}
 
 // Helper Functions
 function sanitize_input($data) {
