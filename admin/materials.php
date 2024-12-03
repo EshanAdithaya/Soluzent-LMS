@@ -48,20 +48,17 @@ function getYoutubeVideoId($url) {
 }
 
 // Handle form submissions
-if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo->beginTransaction();
-        error_log("Transaction started");
 
         switch ($_POST['action']) {
             case 'create':
-                error_log("Create action initiated");
                 switch ($_POST['materialType']) {
                     case 'video':
-                        error_log("Video material type selected");
                         $videoId = getYoutubeVideoId($_POST['youtube_url']);
                         $embedUrl = "https://www.youtube.com/embed/" . $videoId;
-                        $watchUrl = "https://www.youtube.com/watch?v=" . $videoId;
+                        $watchUrl = $_POST['youtube_url'];
                         
                         $stmt = $pdo->prepare("
                             INSERT INTO materials (
@@ -80,11 +77,9 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                             $videoId,
                             $embedUrl
                         ]);
-                        error_log("Video material inserted into database");
                         break;
 
                     case 'link':
-                        error_log("Link material type selected");
                         if (empty($_POST['content'])) {
                             throw new Exception('URL is required.');
                         }
@@ -98,11 +93,9 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                             $_POST['title'],
                             $_POST['content']
                         ]);
-                        error_log("Link material inserted into database");
                         break;
 
                     case 'file':
-                        error_log("File material type selected");
                         if (!isset($_FILES['file']) || $_FILES['file']['error'] !== 0) {
                             throw new Exception('File is required.');
                         }
@@ -118,21 +111,19 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                             $_POST['type'],
                             $fileName
                         ]);
-                        error_log("File material inserted into database");
                         break;
                 }
                 $_SESSION['success'] = "Material added successfully.";
                 break;
 
             case 'update':
-                error_log("Update action initiated");
                 $type = $_POST['materialType'];
                 $content = $_POST['content'] ?? '';
 
                 if ($type === 'video') {
                     $videoId = getYoutubeVideoId($_POST['youtube_url']);
                     $embedUrl = "https://www.youtube.com/embed/" . $videoId;
-                    $watchUrl = "https://www.youtube.com/watch?v=" . $videoId;
+                    $watchUrl = $_POST['youtube_url'];
                     
                     $stmt = $pdo->prepare("
                         UPDATE materials 
@@ -177,12 +168,10 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                         $_POST['material_id']
                     ]);
                 }
-                error_log("Material updated in database");
                 $_SESSION['success'] = "Material updated successfully.";
                 break;
 
             case 'delete':
-                error_log("Delete action initiated");
                 // Get file info before deletion
                 $stmt = $pdo->prepare("SELECT content, type FROM materials WHERE id = ?");
                 $stmt->execute([$_POST['material_id']]);
@@ -198,16 +187,13 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
 
                 $stmt = $pdo->prepare("DELETE FROM materials WHERE id = ?");
                 $stmt->execute([$_POST['material_id']]);
-                error_log("Material deleted from database");
                 $_SESSION['success'] = "Material deleted successfully.";
                 break;
         }
 
         $pdo->commit();
-        error_log("Transaction committed");
     } catch (Exception $e) {
         $pdo->rollBack();
-        error_log("Transaction rolled back: " . $e->getMessage());
         $_SESSION['error'] = $e->getMessage();
     }
 
@@ -345,7 +331,7 @@ $classes = $stmt->fetchAll();
     <div id="materialModal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
         <div class="bg-white rounded-lg p-8 max-w-md w-full">
             <form id="materialForm" method="POST" enctype="multipart/form-data">
-            <input type="hidden" name="action" id="formAction" value="create">
+                <input type="hidden" name="action" id="formAction" value="create">
                 <input type="hidden" name="material_id" id="materialId">
                 
                 <h3 id="modalTitle" class="text-lg font-medium text-gray-900 mb-4">Add New Material</h3>
@@ -422,7 +408,7 @@ $classes = $stmt->fetchAll();
                                placeholder="https://www.youtube.com/watch?v=..."
                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         <p class="mt-1 text-sm text-gray-500">
-                            Enter the URL of your unlisted YouTube video
+                            Enter the URL of your YouTube video
                         </p>
                     </div>
                 </div>
