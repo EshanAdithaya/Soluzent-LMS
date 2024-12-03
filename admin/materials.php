@@ -7,14 +7,7 @@ ini_set('error_log', 'asset/php/php-error.log'); // Change to your log file path
 session_start();
 
 require_once __DIR__ . '/../asset/php/config.php';
-
 require_once __DIR__ . '/../asset/php/youtube_api.php';
-
-// Check admin authentication
-// if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-//     header('Location: ../login.php');
-//     exit;
-// }
 
 // Handle file uploads
 function handleFileUpload($file) {
@@ -363,7 +356,7 @@ error_log("Fetched all classes");
                                    class="text-indigo-600 hover:text-indigo-900">
                                     View Link
                                 </a>
-                            <?php elseif ($material['type'] === 'video'): ?>
+                                <?php elseif ($material['type'] === 'video'): ?>
                                 <button onclick="playVideo('<?= htmlspecialchars($material['embed_url']) ?>', <?= $material['id'] ?>)"
                                         class="text-indigo-600 hover:text-indigo-900">
                                     Play Video
@@ -465,23 +458,23 @@ error_log("Fetched all classes");
                         </div>
                     </div>
                     <div id="videoInput" class="hidden">
-    <label for="video" class="block text-sm font-medium text-gray-700">Video File</label>
-    <input type="file" name="video" id="video" accept="video/mp4,video/quicktime,video/x-msvideo,video/x-ms-wmv"
-           class="mt-1 block w-full text-sm text-gray-500
-                  file:mr-4 file:py-2 file:px-4
-                  file:rounded-md file:border-0
-                  file:text-sm file:font-semibold
-                  file:bg-indigo-50 file:text-indigo-700
-                  hover:file:bg-indigo-100">
-    <p class="mt-1 text-sm text-gray-500">
-        Maximum file size: 2GB. Supported formats: MP4, MOV, AVI, WMV
-    </p>
-    <div class="mt-4">
-        <label for="description" class="block text-sm font-medium text-gray-700">Video Description (Optional)</label>
-        <textarea name="description" id="description" rows="3"
-                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
-    </div>
-</div>
+                        <label for="video" class="block text-sm font-medium text-gray-700">Video File</label>
+                        <input type="file" name="video" id="video" accept="video/mp4,video/quicktime,video/x-msvideo,video/x-ms-wmv"
+                               class="mt-1 block w-full text-sm text-gray-500
+                                      file:mr-4 file:py-2 file:px-4
+                                      file:rounded-md file:border-0
+                                      file:text-sm file:font-semibold
+                                      file:bg-indigo-50 file:text-indigo-700
+                                      hover:file:bg-indigo-100">
+                        <p class="mt-1 text-sm text-gray-500">
+                            Maximum file size: 2GB. Supported formats: MP4, MOV, AVI, WMV
+                        </p>
+                        <div class="mt-4">
+                            <label for="description" class="block text-sm font-medium text-gray-700">Video Description (Optional)</label>
+                            <textarea name="description" id="description" rows="3"
+                                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mt-6 flex justify-end space-x-3">
@@ -520,37 +513,24 @@ error_log("Fetched all classes");
     </div>
 
     <script>
-        function validateForm() {
-            const materialType = document.querySelector('input[name="materialType"]:checked').value;
-            
-            if (materialType === 'video') {
-                const videoUrl = document.getElementById('videoUrl').value.trim();
-                if (!videoUrl) {
-                    alert('Please enter a YouTube URL');
-                    return false;
-                }
-                if (!videoUrl.match(/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/)) {
-                    alert('Please enter a valid YouTube URL');
-                    return false;
-                }
-            }
-            
-            return true;
-        }
-
         function toggleMaterialType(type) {
             const linkInput = document.getElementById('linkInput');
             const fileInput = document.getElementById('fileInput');
             const videoInput = document.getElementById('videoInput');
             
+            // First hide all inputs
             linkInput.classList.add('hidden');
             fileInput.classList.add('hidden');
             videoInput.classList.add('hidden');
             
+            // Remove required attribute from all inputs
             document.getElementById('content').required = false;
             document.getElementById('file').required = false;
-            document.getElementById('videoUrl').required = false;
+            if (document.getElementById('video')) {
+                document.getElementById('video').required = false;
+            }
             
+            // Show and set required for the selected type
             switch(type) {
                 case 'link':
                     linkInput.classList.remove('hidden');
@@ -562,7 +542,7 @@ error_log("Fetched all classes");
                     break;
                 case 'video':
                     videoInput.classList.remove('hidden');
-                    document.getElementById('videoUrl').required = true;
+                    document.getElementById('video').required = true;
                     break;
             }
         }
@@ -573,37 +553,28 @@ error_log("Fetched all classes");
             document.getElementById('formAction').value = 'create';
             document.getElementById('materialId').value = '';
             document.getElementById('materialForm').reset();
-            document.querySelector(`input[name="materialType"][value="${material.type}"]`).checked = true;
             
-            if (material.type === 'video') {
-                document.getElementById('videoUrl').value = material.content;
-            } else if (material.type === 'link') {
-                document.getElementById('content').value = material.content;
-            }
-            
-            toggleMaterialType(material.type);
-           
+            // Set default material type to link and show link input
+            document.querySelector('input[name="materialType"][value="link"]').checked = true;
+            toggleMaterialType('link');
         }
 
         function openEditModal(material) {
             document.getElementById('materialModal').classList.remove('hidden');
-
             document.getElementById('modalTitle').textContent = 'Edit Material';
             document.getElementById('formAction').value = 'update';
             document.getElementById('materialId').value = material.id;
             document.getElementById('classId').value = material.class_id;
             document.getElementById('title').value = material.title;
 
-            // Set material type
+            // Set material type and show corresponding input
             document.querySelector(`input[name="materialType"][value="${material.type}"]`).checked = true;
+            toggleMaterialType(material.type);
             
-            if (material.type === 'video') {
-                document.getElementById('videoUrl').value = material.content;
-            } else if (material.type === 'link') {
+            // Set content based on type
+            if (material.type === 'link') {
                 document.getElementById('content').value = material.content;
             }
-            
-            toggleMaterialType(material.type);
         }
 
         function closeModal() {
@@ -654,8 +625,27 @@ error_log("Fetched all classes");
 
         // Form validation
         document.getElementById('materialForm').addEventListener('submit', function(e) {
-            if (!validateForm()) {
+            const materialType = document.querySelector('input[name="materialType"]:checked').value;
+            let isValid = true;
+            let errorMessage = '';
+
+            if (!document.getElementById('title').value.trim()) {
+                errorMessage = 'Please enter a title';
+                isValid = false;
+            } else if (materialType === 'link' && !document.getElementById('content').value.trim()) {
+                errorMessage = 'Please enter a URL';
+                isValid = false;
+            } else if (materialType === 'file' && !document.getElementById('file').files[0]) {
+                errorMessage = 'Please select a file';
+                isValid = false;
+            } else if (materialType === 'video' && !document.getElementById('video').files[0]) {
+                errorMessage = 'Please select a video file';
+                isValid = false;
+            }
+
+            if (!isValid) {
                 e.preventDefault();
+                alert(errorMessage);
             }
         });
     </script>
