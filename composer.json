@@ -1,7 +1,0 @@
-{
-    "require": {
-        "google/apiclient": "2.15.0",
-        "ralouphie/getallheaders": "^3.0",
-        "google/apiclient-services": "^0.312.0"
-    }
-}
