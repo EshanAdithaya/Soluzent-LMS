@@ -37,15 +37,6 @@ function handleFileUpload($file) {
     throw new Exception("Failed to upload file.");
 }
 
-// Helper function to extract video ID from YouTube URL
-function getYoutubeVideoId($url) {
-    $pattern = '/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i';
-    if (preg_match($pattern, $url, $matches)) {
-        return $matches[1];
-    }
-    throw new Exception("Invalid YouTube URL format.");
-}
-
 // Database connection
 try {
     $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET . ";port=" . DB_PORT;
@@ -59,153 +50,83 @@ try {
     die("Database connection failed. Please try again later.");
 }
 
-// Handle form submissions
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    try {
-        $pdo->beginTransaction();
-
-        switch ($_POST['action']) {
-            case 'create':
-                // Sanitize inputs
-                $title = sanitize_input($_POST['title']);
-                $classId = filter_var($_POST['class_id'], FILTER_VALIDATE_INT);
-                
-                if (!$classId) {
-                    throw new Exception("Invalid class selected.");
-                }
-
-                switch ($_POST['materialType']) {
-                    case 'video':
-                        $videoId = getYoutubeVideoId($_POST['youtube_url']);
-                        $embedUrl = "https://www.youtube.com/embed/" . $videoId;
-                        $watchUrl = filter_var($_POST['youtube_url'], FILTER_SANITIZE_URL);
-                        
-                        $stmt = $pdo->prepare("
-                            INSERT INTO materials (
-                                class_id, 
-                                title, 
-                                type, 
-                                content,
-                                video_id,
-                                embed_url
-                            ) VALUES (?, ?, 'video', ?, ?, ?)
-                        ");
-                        $stmt->execute([$classId, $title, $watchUrl, $videoId, $embedUrl]);
-                        break;
-
-                    case 'link':
-                        $content = filter_var($_POST['content'], FILTER_SANITIZE_URL);
-                        if (!$content) {
-                            throw new Exception('Valid URL is required.');
-                        }
-                        
-                        $stmt = $pdo->prepare("
-                            INSERT INTO materials (class_id, title, type, content) 
-                            VALUES (?, ?, 'link', ?)
-                        ");
-                        $stmt->execute([$classId, $title, $content]);
-                        break;
-
-                    case 'file':
-                        if (!isset($_FILES['file']) || $_FILES['file']['error'] !== 0) {
-                            throw new Exception('File is required.');
-                        }
-
-                        $fileName = handleFileUpload($_FILES['file']);
-                        $stmt = $pdo->prepare("
-                            INSERT INTO materials (class_id, title, type, content) 
-                            VALUES (?, ?, ?, ?)
-                        ");
-                        $stmt->execute([$classId, $title, $_POST['type'], $fileName]);
-                        break;
-                }
-                $_SESSION['success'] = "Material added successfully.";
-                break;
-
-            case 'update':
-                // Similar sanitization for update...
-                $title = sanitize_input($_POST['title']);
-                $classId = filter_var($_POST['class_id'], FILTER_VALIDATE_INT);
-                $materialId = filter_var($_POST['material_id'], FILTER_VALIDATE_INT);
-                
-                if (!$classId || !$materialId) {
-                    throw new Exception("Invalid data provided.");
-                }
-
-                $type = $_POST['materialType'];
-                $content = $_POST['content'] ?? '';
-
-                if ($type === 'video') {
-                    $videoId = getYoutubeVideoId($_POST['youtube_url']);
-                    $embedUrl = "https://www.youtube.com/embed/" . $videoId;
-                    $watchUrl = filter_var($_POST['youtube_url'], FILTER_SANITIZE_URL);
-                    
-                    $stmt = $pdo->prepare("
-                        UPDATE materials 
-                        SET title = ?, class_id = ?, type = ?, content = ?, video_id = ?, embed_url = ?
-                        WHERE id = ?
-                    ");
-                    $stmt->execute([$title, $classId, $type, $watchUrl, $videoId, $embedUrl, $materialId]);
-                } else {
-                    if ($type === 'file' && isset($_FILES['file']) && $_FILES['file']['error'] === 0) {
-                        // Delete old file
-                        $stmt = $pdo->prepare("SELECT content FROM materials WHERE id = ?");
-                        $stmt->execute([$materialId]);
-                        $oldFile = $stmt->fetchColumn();
-                        
-                        $oldFilePath = UPLOAD_PATH . "/materials/" . $oldFile;
-                        if (file_exists($oldFilePath)) {
-                            unlink($oldFilePath);
-                        }
-
-                        $content = handleFileUpload($_FILES['file']);
+// When saving form (in the POST handler):
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        try {
+            $pdo->beginTransaction();
+    
+            switch ($_POST['action']) {
+                case 'create':
+                    switch ($_POST['materialType']) {
+                        case 'video':
+                            $stmt = $pdo->prepare("
+                                INSERT INTO materials (class_id, title, type, content) 
+                                VALUES (?, ?, 'video', ?)
+                            ");
+                            $stmt->execute([
+                                $_POST['class_id'],
+                                $_POST['title'],
+                                $_POST['youtube_url']
+                            ]);
+                            break;
+    
+                        case 'link':
+                            $stmt = $pdo->prepare("
+                                INSERT INTO materials (class_id, title, type, content) 
+                                VALUES (?, ?, 'link', ?)
+                            ");
+                            $stmt->execute([
+                                $_POST['class_id'],
+                                $_POST['title'],
+                                $_POST['content']
+                            ]);
+                            break;
+    
+                        case 'file':
+                            // Your existing file upload code...
+                            break;
                     }
-
+                    $_SESSION['success'] = "Material added successfully.";
+                    break;
+    
+                case 'update':
+                    $type = $_POST['materialType'];
+                    $content = $_POST['content'] ?? '';
+    
+                    if ($type === 'video') {
+                        $content = $_POST['youtube_url'];
+                    } elseif ($type === 'file' && isset($_FILES['file']) && $_FILES['file']['error'] === 0) {
+                        // Your existing file update code...
+                    }
+    
                     $stmt = $pdo->prepare("
                         UPDATE materials 
                         SET title = ?, class_id = ?, type = ?, content = ?
                         WHERE id = ?
                     ");
-                    $stmt->execute([$title, $classId, $type, $content, $materialId]);
-                }
-                $_SESSION['success'] = "Material updated successfully.";
-                break;
-
-            case 'delete':
-                $materialId = filter_var($_POST['material_id'], FILTER_VALIDATE_INT);
-                if (!$materialId) {
-                    throw new Exception("Invalid material ID.");
-                }
-
-                // Get file info before deletion
-                $stmt = $pdo->prepare("SELECT content, type FROM materials WHERE id = ?");
-                $stmt->execute([$materialId]);
-                $material = $stmt->fetch();
-
-                // Delete physical file if exists
-                if ($material['type'] === 'file') {
-                    $filePath = UPLOAD_PATH . "/materials/" . $material['content'];
-                    if (file_exists($filePath)) {
-                        unlink($filePath);
-                    }
-                }
-
-                $stmt = $pdo->prepare("DELETE FROM materials WHERE id = ?");
-                $stmt->execute([$materialId]);
-                $_SESSION['success'] = "Material deleted successfully.";
-                break;
+                    $stmt->execute([
+                        $_POST['title'],
+                        $_POST['class_id'],
+                        $type,
+                        $content,
+                        $_POST['material_id']
+                    ]);
+                    $_SESSION['success'] = "Material updated successfully.";
+                    break;
+    
+                // Keep your existing delete case...
+            }
+    
+            $pdo->commit();
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            $_SESSION['error'] = $e->getMessage();
         }
-
-        $pdo->commit();
-    } catch (Exception $e) {
-        $pdo->rollBack();
-        error_log("Error in materials.php: " . $e->getMessage());
-        $_SESSION['error'] = $e->getMessage();
+    
+        // Change redirect to just refresh the current page
+        header('Location: ' . $_SERVER['PHP_SELF']);
+        exit;
     }
-
-    redirect('admin/materials.php');
-}
-
 // Fetch all materials with class names
 $stmt = $pdo->query("
     SELECT m.*, c.name as class_name 
@@ -300,17 +221,12 @@ $classes = $stmt->fetchAll();
                             <?= ucfirst(htmlspecialchars($material['type'])) ?>
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-500">
-                            <?php if ($material['type'] === 'link'): ?>
+                            <?php if ($material['type'] === 'link' || $material['type'] === 'video'): ?>
                                 <a href="<?= htmlspecialchars($material['content']) ?>" 
                                    target="_blank" 
                                    class="text-indigo-600 hover:text-indigo-900">
-                                    View Link
+                                    View <?= ucfirst($material['type']) ?>
                                 </a>
-                            <?php elseif ($material['type'] === 'video'): ?>
-                                <button onclick="playVideo('<?= htmlspecialchars($material['embed_url']) ?>', <?= $material['id'] ?>)"
-                                        class="text-indigo-600 hover:text-indigo-900">
-                                    Play Video
-                                </button>
                             <?php else: ?>
                                 <a href="<?= APP_URL ?>/uploads/materials/<?= htmlspecialchars($material['content']) ?>" 
                                    target="_blank"
@@ -329,7 +245,7 @@ $classes = $stmt->fetchAll();
                     <?php endforeach; ?>
                 </tbody>
             </table>
-            </div>
+        </div>
     </div>
 
     <!-- Add/Edit Material Modal -->
@@ -357,7 +273,7 @@ $classes = $stmt->fetchAll();
                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Material Type</label>
+                    <label class="block text-sm font-medium text-gray-700">Material Type</label>
                         <div class="mt-2 space-x-4">
                             <label class="inline-flex items-center">
                                 <input type="radio" name="materialType" value="link" checked
@@ -415,9 +331,6 @@ $classes = $stmt->fetchAll();
                         <input type="url" name="youtube_url" id="youtube_url"
                                placeholder="https://www.youtube.com/watch?v=..."
                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <p class="mt-1 text-sm text-gray-500">
-                            Enter the URL of your YouTube video
-                        </p>
                     </div>
                 </div>
 
@@ -432,27 +345,6 @@ $classes = $stmt->fetchAll();
                     </button>
                 </div>
             </form>
-        </div>
-    </div>
-
-    <!-- Video Player Modal -->
-    <div id="videoPlayer" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-        <div class="relative bg-white rounded-lg max-w-4xl w-full mx-4">
-            <div class="absolute top-0 right-0 p-4">
-                <button onclick="closeVideoPlayer()" class="text-gray-500 hover:text-gray-700">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-            <div class="aspect-w-16 aspect-h-9">
-                <iframe id="youtubeEmbed" 
-                        class="w-full h-full" 
-                        frameborder="0" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowfullscreen>
-                </iframe>
-            </div>
         </div>
     </div>
 
@@ -480,8 +372,8 @@ $classes = $stmt->fetchAll();
                     document.getElementById('file').required = true;
                     break;
                 case 'video':
-                    videoInput.classList.remove('hidden');
-                    document.getElementById('youtube_url').required = true;
+                    $stmt = $pdo->prepare("INSERT INTO materials (class_id, title, type, content) VALUES (?, ?, 'youtubeLink', ?)");
+                     $stmt->execute([$_POST['class_id'], $_POST['title'],$_POST['youtube_url']]);
                     break;
             }
         }
@@ -518,16 +410,6 @@ $classes = $stmt->fetchAll();
         function closeModal() {
             document.getElementById('materialModal').classList.add('hidden');
             document.getElementById('materialForm').reset();
-        }
-
-        function playVideo(embedUrl, materialId) {
-            document.getElementById('youtubeEmbed').src = embedUrl;
-            document.getElementById('videoPlayer').classList.remove('hidden');
-        }
-
-        function closeVideoPlayer() {
-            document.getElementById('youtubeEmbed').src = '';
-            document.getElementById('videoPlayer').classList.add('hidden');
         }
 
         function confirmDelete(materialId) {
@@ -578,16 +460,12 @@ $classes = $stmt->fetchAll();
             if (event.target === document.getElementById('materialModal')) {
                 closeModal();
             }
-            if (event.target === document.getElementById('videoPlayer')) {
-                closeVideoPlayer();
-            }
         }
 
         // Handle escape key
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeModal();
-                closeVideoPlayer();
             }
         });
     </script>
