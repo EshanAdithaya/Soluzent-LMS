@@ -54,7 +54,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <div class="ml-3 relative">
                         <div class="flex items-center space-x-4">
                             <span id="adminName" class="text-gray-700"></span>
-                            <button id="logoutBtn" class="text-gray-600 hover:text-gray-900">Logout</button>
+                            <a href="../asset/php/logout.php"> <button id="logoutBtn" class="text-gray-600 hover:text-gray-900">Logout</button> </a>
                         </div>
                     </div>
                 </div>
