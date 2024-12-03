@@ -3,26 +3,27 @@
 
 // Error Reporting
 error_reporting(E_ALL);
-ini_set('display_errors', 0); // Set to 0 in production
+ini_set('display_errors', 0); // Always set to 0 in production
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/error.log');
 
 // Database Configuration
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'nimru');
-define('DB_USER', 'root');         // Change in production
-define('DB_PASS', '');             // Change in production
+define('DB_HOST', 'db-mysql-nyc3-14016-do-user-17700770-0.d.db.ondigitalocean.com');
+define('DB_NAME', 'defaultdb');
+define('DB_USER', 'doadmin');
+define('DB_PASS', 'AVNS_l3SW8eljPIvmmGNUCFK');
 define('DB_CHARSET', 'utf8mb4');
+define('DB_PORT', 25060);
 
 // Application Settings
 define('APP_NAME', 'EduPortal');
-define('APP_URL', 'http://localhost/education-platform'); // Change in production
-define('ADMIN_EMAIL', 'admin@example.com');
+define('APP_URL', 'https://your-production-domain.com'); // Change to your live domain
+define('ADMIN_EMAIL', 'admin@your-domain.com');
 
 // Session Configuration
 ini_set('session.cookie_httponly', 1);
 ini_set('session.use_only_cookies', 1);
-ini_set('session.cookie_secure', 0);   // Set to 1 in production (HTTPS)
+ini_set('session.cookie_secure', 1);   // Set to 1 in production (HTTPS)
 ini_set('session.cookie_samesite', 'Strict');
 ini_set('session.gc_maxlifetime', 3600); // Session timeout in seconds (1 hour)
 
@@ -43,7 +44,7 @@ define('SMTP_HOST', 'smtp.example.com');
 define('SMTP_PORT', 587);
 define('SMTP_USER', 'your-email@example.com');
 define('SMTP_PASS', 'your-password');
-define('SMTP_FROM', 'noreply@example.com');
+define('SMTP_FROM', 'noreply@your-domain.com');
 
 // Security
 define('HASH_COST', 12); // For password hashing
@@ -54,14 +55,14 @@ date_default_timezone_set('UTC');
 // Create database connection
 try {
     $pdo = new PDO(
-        "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET,
+        "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET,
         DB_USER,
         DB_PASS,
         [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES => false,
-            PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES " . DB_CHARSET
+            PDO::MYSQL_ATTR_SSL_CA => '/etc/ssl/cert.pem', // Ensure SSL for secure DB connection
         ]
     );
 } catch (PDOException $e) {

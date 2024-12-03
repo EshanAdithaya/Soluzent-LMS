@@ -3,11 +3,17 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 ini_set('log_errors', 1);
-ini_set('error_log', 'asset/php/php-error.log'); // Change to your log file path
+ini_set('error_log', '../asset/php/php-error.log');
 session_start();
 
 require_once __DIR__ . '/../asset/php/config.php';
 require_once __DIR__ . '/../asset/php/youtube_api.php';
+
+// Check admin authentication
+// if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+//     header('Location: ../login.php');
+//     exit;
+// }
 
 // Handle file uploads
 function handleFileUpload($file) {
@@ -39,27 +45,6 @@ function handleFileUpload($file) {
     throw new Exception("Failed to upload file.");
 }
 
-// Handle video upload and generate embed URL
-function handleVideoUrl($url) {
-    error_log("handleVideoUrl called with URL: " . $url);
-    // Extract YouTube video ID from different URL formats
-    $videoId = '';
-    
-    if (preg_match('%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})%i', $url, $match)) {
-        $videoId = $match[1];
-    }
-    
-    if (!$videoId) {
-        throw new Exception("Invalid YouTube URL");
-    }
-    
-    return [
-        'video_id' => $videoId,
-        'embed_url' => "https://www.youtube.com/embed/" . $videoId,
-        'watch_url' => $url
-    ];
-}
-
 // Handle form submissions
 if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
@@ -72,51 +57,25 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                 switch ($_POST['materialType']) {
                     case 'video':
                         error_log("Video material type selected");
-                        if (!isset($_FILES['video']) || $_FILES['video']['error'] !== 0) {
-                            throw new Exception('Video file is required.');
-                        }
-                    
-                        // Check file size (2GB limit for YouTube)
-                        if ($_FILES['video']['size'] > 2147483648) {
-                            throw new Exception("File is too large. Maximum size is 2GB.");
-                        }
-                    
-                        // Check file type
-                        $allowedTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-ms-wmv'];
-                        if (!in_array($_FILES['video']['type'], $allowedTypes)) {
-                            throw new Exception("Invalid video format. Allowed formats: MP4, MOV, AVI, WMV");
-                        }
-                    
-                        try {
-                            $uploader = new YouTubeUploader();
-                            $videoDetails = $uploader->uploadVideo(
-                                $_FILES['video'],
-                                $_POST['title'],
-                                $_POST['description'] ?? ''
-                            );
-                            error_log("Video uploaded successfully");
-                    
-                            $stmt = $pdo->prepare("
-                                INSERT INTO materials (
-                                    class_id, 
-                                    title, 
-                                    type, 
-                                    content,
-                                    video_id,
-                                    embed_url
-                                ) VALUES (?, ?, 'video', ?, ?, ?)
-                            ");
-                            $stmt->execute([
-                                $_POST['class_id'],
-                                $_POST['title'],
-                                $videoDetails['watch_url'],
-                                $videoDetails['video_id'],
-                                $videoDetails['embed_url']
-                            ]);
-                            error_log("Video material inserted into database");
-                        } catch (Exception $e) {
-                            throw new Exception("Failed to upload video: " . $e->getMessage());
-                        }
+                        // Video details will be handled by upload_video.php
+                        $stmt = $pdo->prepare("
+                            INSERT INTO materials (
+                                class_id, 
+                                title, 
+                                type, 
+                                content,
+                                video_id,
+                                embed_url
+                            ) VALUES (?, ?, 'video', ?, ?, ?)
+                        ");
+                        $stmt->execute([
+                            $_POST['class_id'],
+                            $_POST['title'],
+                            $_POST['content'], // watch_url
+                            $_POST['video_id'],
+                            $_POST['embed_url']
+                        ]);
+                        error_log("Video material inserted into database");
                         break;
 
                     case 'link':
@@ -165,57 +124,33 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                 $type = $_POST['materialType'];
                 $content = $_POST['content'] ?? '';
 
-                if ($type === 'video') {
-                    if (!empty($_POST['videoUrl'])) {
-                        $videoDetails = handleVideoUrl($_POST['videoUrl']);
-                        $stmt = $pdo->prepare("
-                            UPDATE materials 
-                            SET title = ?, type = ?, content = ?, video_id = ?, embed_url = ?, class_id = ?
-                            WHERE id = ?
-                        ");
-                        $stmt->execute([
-                            $_POST['title'],
-                            'video',
-                            $videoDetails['watch_url'],
-                            $videoDetails['video_id'],
-                            $videoDetails['embed_url'],
-                            $_POST['class_id'],
-                            $_POST['material_id']
-                        ]);
-                        error_log("Video material updated in database");
-                    }
-                } else if ($type === 'file' && isset($_FILES['file']) && $_FILES['file']['error'] === 0) {
+                // Handle file update if new file is uploaded
+                if ($type === 'file' && isset($_FILES['file']) && $_FILES['file']['error'] === 0) {
                     // Delete old file
-                    $stmt = $pdo->prepare("SELECT content, type FROM materials WHERE id = ?");
+                    $stmt = $pdo->prepare("SELECT content FROM materials WHERE id = ?");
                     $stmt->execute([$_POST['material_id']]);
-                    $oldMaterial = $stmt->fetch();
+                    $oldFile = $stmt->fetchColumn();
                     
-                    if ($oldMaterial['type'] != 'link' && $oldMaterial['type'] != 'video') {
-                        $oldFile = "../uploads/materials/" . $oldMaterial['content'];
-                        if (file_exists($oldFile)) {
-                            unlink($oldFile);
-                        }
+                    $oldFilePath = "../asset/uploads/materials/" . $oldFile;
+                    if (file_exists($oldFilePath)) {
+                        unlink($oldFilePath);
                     }
 
-                    $fileName = handleFileUpload($_FILES['file']);
-                    $content = $fileName;
+                    $content = handleFileUpload($_FILES['file']);
                 }
 
                 $stmt = $pdo->prepare("
                     UPDATE materials 
-                    SET title = ?, class_id = ?" . 
-                    ($type !== 'video' ? ", type = ?, content = ?" : "") . "
+                    SET title = ?, class_id = ?, type = ?, content = ?
                     WHERE id = ?
                 ");
-
-                $params = [$_POST['title'], $_POST['class_id']];
-                if ($type !== 'video') {
-                    $params[] = $_POST['type'] ?? $type;
-                    $params[] = $content;
-                }
-                $params[] = $_POST['material_id'];
-                
-                $stmt->execute($params);
+                $stmt->execute([
+                    $_POST['title'],
+                    $_POST['class_id'],
+                    $type,
+                    $content,
+                    $_POST['material_id']
+                ]);
                 error_log("Material updated in database");
                 $_SESSION['success'] = "Material updated successfully.";
                 break;
@@ -227,11 +162,11 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                 $stmt->execute([$_POST['material_id']]);
                 $material = $stmt->fetch();
 
-                // Delete file if exists
-                if ($material['type'] != 'link' && $material['type'] != 'video') {
-                    $file = "../uploads/materials/" . $material['content'];
-                    if (file_exists($file)) {
-                        unlink($file);
+                // Delete physical file if exists
+                if ($material['type'] === 'file') {
+                    $filePath = "../asset/uploads/materials/" . $material['content'];
+                    if (file_exists($filePath)) {
+                        unlink($filePath);
                     }
                 }
 
@@ -262,12 +197,10 @@ $stmt = $pdo->query("
     ORDER BY m.created_at DESC
 ");
 $materials = $stmt->fetchAll();
-error_log("Fetched all materials");
 
 // Fetch all classes for the dropdown
 $stmt = $pdo->query("SELECT id, name FROM classes ORDER BY name");
 $classes = $stmt->fetchAll();
-error_log("Fetched all classes");
 ?>
 
 <!DOCTYPE html>
@@ -356,13 +289,13 @@ error_log("Fetched all classes");
                                    class="text-indigo-600 hover:text-indigo-900">
                                     View Link
                                 </a>
-                                <?php elseif ($material['type'] === 'video'): ?>
+                            <?php elseif ($material['type'] === 'video'): ?>
                                 <button onclick="playVideo('<?= htmlspecialchars($material['embed_url']) ?>', <?= $material['id'] ?>)"
                                         class="text-indigo-600 hover:text-indigo-900">
                                     Play Video
                                 </button>
                             <?php else: ?>
-                                <a href="../uploads/materials/<?= htmlspecialchars($material['content']) ?>" 
+                                <a href="../asset/uploads/materials/<?= htmlspecialchars($material['content']) ?>" 
                                    target="_blank"
                                    class="text-indigo-600 hover:text-indigo-900">
                                     View File
@@ -395,7 +328,7 @@ error_log("Fetched all classes");
                     <div>
                         <label for="class_id" class="block text-sm font-medium text-gray-700">Class</label>
                         <select name="class_id" id="classId" required
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                             <?php foreach ($classes as $class): ?>
                                 <option value="<?= $class['id'] ?>"><?= htmlspecialchars($class['name']) ?></option>
                             <?php endforeach; ?>
@@ -409,7 +342,7 @@ error_log("Fetched all classes");
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Material Type</label>
                         <div class="mt-2 space-x-4">
-                            <label class="inline-flex items-center">
+                        <label class="inline-flex items-center">
                                 <input type="radio" name="materialType" value="link" checked
                                        onchange="toggleMaterialType(this.value)"
                                        class="form-radio text-indigo-600">
@@ -475,6 +408,16 @@ error_log("Fetched all classes");
                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
                         </div>
                     </div>
+
+                    <div id="uploadProgress" class="hidden mt-4">
+                        <div class="flex justify-between mb-1">
+                            <span id="uploadStatusText" class="text-sm font-medium text-gray-700">Uploading... 0%</span>
+                            <span id="uploadPercentage" class="text-sm font-medium text-gray-700">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div id="uploadProgressBar" class="bg-indigo-600 h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mt-6 flex justify-end space-x-3">
@@ -513,24 +456,86 @@ error_log("Fetched all classes");
     </div>
 
     <script>
+        async function uploadFile(file, url, type = 'file') {
+            const formData = new FormData();
+            formData.append(type, file);
+            if (document.getElementById('title')) {
+                formData.append('title', document.getElementById('title').value);
+            }
+            if (document.getElementById('description')) {
+                formData.append('description', document.getElementById('description').value);
+            }
+            
+            const progressDiv = document.getElementById('uploadProgress');
+            const progressBar = document.getElementById('uploadProgressBar');
+            const statusText = document.getElementById('uploadStatusText');
+            const percentageText = document.getElementById('uploadPercentage');
+            
+            progressDiv.classList.remove('hidden');
+            
+            try {
+                const response = await new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    
+                    xhr.upload.addEventListener('progress', (e) => {
+                        if (e.lengthComputable) {
+                            const percentage = Math.round((e.loaded * 100) / e.total);
+                            progressBar.style.width = percentage + '%';
+                            percentageText.textContent = percentage + '%';
+                            statusText.textContent = `Uploading ${type}... ${percentage}%`;
+                        }
+                    });
+                    
+                    xhr.addEventListener('load', () => {
+                        if (xhr.status === 200) {
+                            try {
+                                const response = JSON.parse(xhr.responseText);
+                                resolve(response);
+                            } catch (e) {
+                                reject(new Error('Invalid response format'));
+                            }
+                        } else {
+                            reject(new Error(`Upload failed with status ${xhr.status}`));
+                        }
+                    });
+                    
+                    xhr.addEventListener('error', () => reject(new Error('Network error occurred')));
+                    
+                    xhr.open('POST', url);
+                    xhr.send(formData);
+                });
+                
+                if (!response.success) {
+                    throw new Error(response.error || 'Upload failed');
+                }
+                
+                progressBar.style.width = '100%';
+                percentageText.textContent = '100%';
+                statusText.textContent = `${type.charAt(0).toUpperCase() + type.slice(1)} uploaded successfully!`;
+                
+                return response;
+                
+            } catch (error) {
+                statusText.textContent = `Error uploading ${type}: ${error.message}`;
+                throw error;
+            }
+        }
+
         function toggleMaterialType(type) {
             const linkInput = document.getElementById('linkInput');
             const fileInput = document.getElementById('fileInput');
             const videoInput = document.getElementById('videoInput');
             
-            // First hide all inputs
             linkInput.classList.add('hidden');
             fileInput.classList.add('hidden');
             videoInput.classList.add('hidden');
             
-            // Remove required attribute from all inputs
             document.getElementById('content').required = false;
             document.getElementById('file').required = false;
             if (document.getElementById('video')) {
                 document.getElementById('video').required = false;
             }
             
-            // Show and set required for the selected type
             switch(type) {
                 case 'link':
                     linkInput.classList.remove('hidden');
@@ -554,9 +559,15 @@ error_log("Fetched all classes");
             document.getElementById('materialId').value = '';
             document.getElementById('materialForm').reset();
             
-            // Set default material type to link and show link input
             document.querySelector('input[name="materialType"][value="link"]').checked = true;
             toggleMaterialType('link');
+            
+            // Reset progress bar
+            const progressDiv = document.getElementById('uploadProgress');
+            progressDiv.classList.add('hidden');
+            document.getElementById('uploadProgressBar').style.width = '0%';
+            document.getElementById('uploadStatusText').textContent = 'Uploading... 0%';
+            document.getElementById('uploadPercentage').textContent = '0%';
         }
 
         function openEditModal(material) {
@@ -567,19 +578,31 @@ error_log("Fetched all classes");
             document.getElementById('classId').value = material.class_id;
             document.getElementById('title').value = material.title;
 
-            // Set material type and show corresponding input
             document.querySelector(`input[name="materialType"][value="${material.type}"]`).checked = true;
             toggleMaterialType(material.type);
             
-            // Set content based on type
             if (material.type === 'link') {
                 document.getElementById('content').value = material.content;
             }
+
+            // Reset progress bar
+            const progressDiv = document.getElementById('uploadProgress');
+            progressDiv.classList.add('hidden');
+            document.getElementById('uploadProgressBar').style.width = '0%';
+            document.getElementById('uploadStatusText').textContent = 'Uploading... 0%';
+            document.getElementById('uploadPercentage').textContent = '0%';
         }
 
         function closeModal() {
             document.getElementById('materialModal').classList.add('hidden');
             document.getElementById('materialForm').reset();
+            
+            // Reset progress bar
+            const progressDiv = document.getElementById('uploadProgress');
+            progressDiv.classList.add('hidden');
+            document.getElementById('uploadProgressBar').style.width = '0%';
+            document.getElementById('uploadStatusText').textContent = 'Uploading... 0%';
+            document.getElementById('uploadPercentage').textContent = '0%';
         }
 
         function playVideo(embedUrl, materialId) {
@@ -605,26 +628,10 @@ error_log("Fetched all classes");
             }
         }
 
-        // Close modals when clicking outside
-        window.onclick = function(event) {
-            if (event.target === document.getElementById('materialModal')) {
-                closeModal();
-            }
-            if (event.target === document.getElementById('videoPlayer')) {
-                closeVideoPlayer();
-            }
-        }
-
-        // Handle escape key
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeModal();
-                closeVideoPlayer();
-            }
-        });
-
-        // Form validation
-        document.getElementById('materialForm').addEventListener('submit', function(e) {
+        // Form submission handler
+        document.getElementById('materialForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
             const materialType = document.querySelector('input[name="materialType"]:checked').value;
             let isValid = true;
             let errorMessage = '';
@@ -644,8 +651,72 @@ error_log("Fetched all classes");
             }
 
             if (!isValid) {
-                e.preventDefault();
                 alert(errorMessage);
+                return;
+            }
+
+            const form = this;
+            const submitButton = form.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            
+            try {
+                if (materialType === 'video') {
+                    const videoFile = document.getElementById('video').files[0];
+                    const response = await uploadFile(videoFile, 'upload_video.php', 'video');
+                    
+                    if (response.data) {
+                        const hiddenFields = `
+                            <input type="hidden" name="video_id" value="${response.data.video_id}">
+                            <input type="hidden" name="embed_url" value="${response.data.embed_url}">
+                            <input type="hidden" name="content" value="${response.data.watch_url}">
+                        `;
+                        form.insertAdjacentHTML('beforeend', hiddenFields);
+                    }
+                } else if (materialType === 'file') {
+                    const file = document.getElementById('file').files[0];
+                    const response = await uploadFile(file, 'upload_file.php', 'file');
+                    
+                    if (response.filename) {
+                        const hiddenField = `<input type="hidden" name="content" value="${response.filename}">`;
+                        form.insertAdjacentHTML('beforeend', hiddenField);
+                    }
+                }
+                
+                form.submit();
+                
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert(error.message);
+                submitButton.disabled = false;
+                
+                // Reset progress bar on error
+                const progressDiv = document.getElementById('uploadProgress');
+                const progressBar = document.getElementById('uploadProgressBar');
+                const statusText = document.getElementById('uploadStatusText');
+                const percentageText = document.getElementById('uploadPercentage');
+                
+                progressDiv.classList.add('hidden');
+                progressBar.style.width = '0%';
+                statusText.textContent = 'Uploading... 0%';
+                percentageText.textContent = '0%';
+            }
+        });
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            if (event.target === document.getElementById('materialModal')) {
+                closeModal();
+            }
+            if (event.target === document.getElementById('videoPlayer')) {
+                closeVideoPlayer();
+            }
+        }
+
+        // Handle escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+                closeVideoPlayer();
             }
         });
     </script>
