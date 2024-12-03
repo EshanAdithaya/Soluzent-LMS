@@ -61,6 +61,7 @@ try {
         'recentMaterials' => $recentMaterials
     ]);
 } catch (PDOException $e) {
+    error_log("Dashboard Error: " . $e->getMessage()); // Add this line
     echo json_encode(['success' => false, 'message' => 'Database error']);
     error_log($e->getMessage());
 }
