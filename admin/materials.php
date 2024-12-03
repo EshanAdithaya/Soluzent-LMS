@@ -1,34 +1,33 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-ini_set('log_errors', 1);
-ini_set('error_log', '../asset/php/php-error.log');
-session_start();
-
 require_once __DIR__ . '/../asset/php/config.php';
+
+// Check admin authentication
+if (!is_admin()) {
+    redirect('login.php');
+}
 
 // Handle file uploads
 function handleFileUpload($file) {
     error_log("handleFileUpload called");
-    $targetDir = "../asset/uploads/materials/";
+    $targetDir = UPLOAD_PATH . '/materials/';
     if (!file_exists($targetDir)) {
-        mkdir($targetDir, 0777, true);
+        mkdir($targetDir, 0755, true);
     }
 
     $fileName = time() . '_' . basename($file["name"]);
     $targetFile = $targetDir . $fileName;
     $fileType = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
+    $mimeType = mime_content_type($file["tmp_name"]);
 
-    // Check file size (5MB limit for regular files)
-    if ($file["size"] > 5000000) {
-        throw new Exception("File is too large. Maximum size is 5MB.");
+    // Check file size
+    if ($file["size"] > MAX_FILE_SIZE) {
+        throw new Exception("File is too large. Maximum size is " . (MAX_FILE_SIZE / 1024 / 1024) . "MB.");
     }
 
-    // Allow certain file formats
-    $allowedTypes = array('pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png');
-    if (!in_array($fileType, $allowedTypes)) {
-        throw new Exception("Only PDF, DOC, DOCX, JPG, JPEG & PNG files are allowed.");
+    // Check file type
+    if (!array_key_exists($fileType, ALLOWED_FILE_TYPES) || 
+        !in_array($mimeType, ALLOWED_FILE_TYPES)) {
+        throw new Exception("Invalid file type. Allowed types: PDF, DOC, DOCX, JPG, JPEG & PNG.");
     }
 
     if (move_uploaded_file($file["tmp_name"], $targetFile)) {
@@ -47,6 +46,19 @@ function getYoutubeVideoId($url) {
     throw new Exception("Invalid YouTube URL format.");
 }
 
+// Database connection
+try {
+    $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET . ";port=" . DB_PORT;
+    $pdo = new PDO($dsn, DB_USER, DB_PASS, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false,
+    ]);
+} catch (PDOException $e) {
+    error_log("Database connection failed: " . $e->getMessage());
+    die("Database connection failed. Please try again later.");
+}
+
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
@@ -54,11 +66,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         switch ($_POST['action']) {
             case 'create':
+                // Sanitize inputs
+                $title = sanitize_input($_POST['title']);
+                $classId = filter_var($_POST['class_id'], FILTER_VALIDATE_INT);
+                
+                if (!$classId) {
+                    throw new Exception("Invalid class selected.");
+                }
+
                 switch ($_POST['materialType']) {
                     case 'video':
                         $videoId = getYoutubeVideoId($_POST['youtube_url']);
                         $embedUrl = "https://www.youtube.com/embed/" . $videoId;
-                        $watchUrl = $_POST['youtube_url'];
+                        $watchUrl = filter_var($_POST['youtube_url'], FILTER_SANITIZE_URL);
                         
                         $stmt = $pdo->prepare("
                             INSERT INTO materials (
@@ -70,29 +90,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 embed_url
                             ) VALUES (?, ?, 'video', ?, ?, ?)
                         ");
-                        $stmt->execute([
-                            $_POST['class_id'],
-                            $_POST['title'],
-                            $watchUrl,
-                            $videoId,
-                            $embedUrl
-                        ]);
+                        $stmt->execute([$classId, $title, $watchUrl, $videoId, $embedUrl]);
                         break;
 
                     case 'link':
-                        if (empty($_POST['content'])) {
-                            throw new Exception('URL is required.');
+                        $content = filter_var($_POST['content'], FILTER_SANITIZE_URL);
+                        if (!$content) {
+                            throw new Exception('Valid URL is required.');
                         }
                         
                         $stmt = $pdo->prepare("
                             INSERT INTO materials (class_id, title, type, content) 
                             VALUES (?, ?, 'link', ?)
                         ");
-                        $stmt->execute([
-                            $_POST['class_id'],
-                            $_POST['title'],
-                            $_POST['content']
-                        ]);
+                        $stmt->execute([$classId, $title, $content]);
                         break;
 
                     case 'file':
@@ -105,49 +116,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             INSERT INTO materials (class_id, title, type, content) 
                             VALUES (?, ?, ?, ?)
                         ");
-                        $stmt->execute([
-                            $_POST['class_id'],
-                            $_POST['title'],
-                            $_POST['type'],
-                            $fileName
-                        ]);
+                        $stmt->execute([$classId, $title, $_POST['type'], $fileName]);
                         break;
                 }
                 $_SESSION['success'] = "Material added successfully.";
                 break;
 
             case 'update':
+                // Similar sanitization for update...
+                $title = sanitize_input($_POST['title']);
+                $classId = filter_var($_POST['class_id'], FILTER_VALIDATE_INT);
+                $materialId = filter_var($_POST['material_id'], FILTER_VALIDATE_INT);
+                
+                if (!$classId || !$materialId) {
+                    throw new Exception("Invalid data provided.");
+                }
+
                 $type = $_POST['materialType'];
                 $content = $_POST['content'] ?? '';
 
                 if ($type === 'video') {
                     $videoId = getYoutubeVideoId($_POST['youtube_url']);
                     $embedUrl = "https://www.youtube.com/embed/" . $videoId;
-                    $watchUrl = $_POST['youtube_url'];
+                    $watchUrl = filter_var($_POST['youtube_url'], FILTER_SANITIZE_URL);
                     
                     $stmt = $pdo->prepare("
                         UPDATE materials 
                         SET title = ?, class_id = ?, type = ?, content = ?, video_id = ?, embed_url = ?
                         WHERE id = ?
                     ");
-                    $stmt->execute([
-                        $_POST['title'],
-                        $_POST['class_id'],
-                        $type,
-                        $watchUrl,
-                        $videoId,
-                        $embedUrl,
-                        $_POST['material_id']
-                    ]);
+                    $stmt->execute([$title, $classId, $type, $watchUrl, $videoId, $embedUrl, $materialId]);
                 } else {
-                    // Handle file update if new file is uploaded
                     if ($type === 'file' && isset($_FILES['file']) && $_FILES['file']['error'] === 0) {
                         // Delete old file
                         $stmt = $pdo->prepare("SELECT content FROM materials WHERE id = ?");
-                        $stmt->execute([$_POST['material_id']]);
+                        $stmt->execute([$materialId]);
                         $oldFile = $stmt->fetchColumn();
                         
-                        $oldFilePath = "../asset/uploads/materials/" . $oldFile;
+                        $oldFilePath = UPLOAD_PATH . "/materials/" . $oldFile;
                         if (file_exists($oldFilePath)) {
                             unlink($oldFilePath);
                         }
@@ -160,33 +166,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         SET title = ?, class_id = ?, type = ?, content = ?
                         WHERE id = ?
                     ");
-                    $stmt->execute([
-                        $_POST['title'],
-                        $_POST['class_id'],
-                        $type,
-                        $content,
-                        $_POST['material_id']
-                    ]);
+                    $stmt->execute([$title, $classId, $type, $content, $materialId]);
                 }
                 $_SESSION['success'] = "Material updated successfully.";
                 break;
 
             case 'delete':
+                $materialId = filter_var($_POST['material_id'], FILTER_VALIDATE_INT);
+                if (!$materialId) {
+                    throw new Exception("Invalid material ID.");
+                }
+
                 // Get file info before deletion
                 $stmt = $pdo->prepare("SELECT content, type FROM materials WHERE id = ?");
-                $stmt->execute([$_POST['material_id']]);
+                $stmt->execute([$materialId]);
                 $material = $stmt->fetch();
 
                 // Delete physical file if exists
                 if ($material['type'] === 'file') {
-                    $filePath = "../asset/uploads/materials/" . $material['content'];
+                    $filePath = UPLOAD_PATH . "/materials/" . $material['content'];
                     if (file_exists($filePath)) {
                         unlink($filePath);
                     }
                 }
 
                 $stmt = $pdo->prepare("DELETE FROM materials WHERE id = ?");
-                $stmt->execute([$_POST['material_id']]);
+                $stmt->execute([$materialId]);
                 $_SESSION['success'] = "Material deleted successfully.";
                 break;
         }
@@ -194,11 +199,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->commit();
     } catch (Exception $e) {
         $pdo->rollBack();
+        error_log("Error in materials.php: " . $e->getMessage());
         $_SESSION['error'] = $e->getMessage();
     }
 
-    header('Location: materials.php');
-    exit;
+    redirect('admin/materials.php');
 }
 
 // Fetch all materials with class names
@@ -220,7 +225,7 @@ $classes = $stmt->fetchAll();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Materials Management - Admin Dashboard</title>
+    <title><?= APP_NAME ?> - Materials Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50">
@@ -230,7 +235,7 @@ $classes = $stmt->fetchAll();
             <div class="flex justify-between h-16">
                 <div class="flex">
                     <div class="flex-shrink-0 flex items-center">
-                        <h1 class="text-xl font-bold text-indigo-600">EduPortal Admin</h1>
+                        <h1 class="text-xl font-bold text-indigo-600"><?= APP_NAME ?> Admin</h1>
                     </div>
                 </div>
                 <div class="flex items-center space-x-8">
@@ -307,7 +312,7 @@ $classes = $stmt->fetchAll();
                                     Play Video
                                 </button>
                             <?php else: ?>
-                                <a href="../asset/uploads/materials/<?= htmlspecialchars($material['content']) ?>" 
+                                <a href="<?= APP_URL ?>/uploads/materials/<?= htmlspecialchars($material['content']) ?>" 
                                    target="_blank"
                                    class="text-indigo-600 hover:text-indigo-900">
                                     View File
@@ -324,7 +329,7 @@ $classes = $stmt->fetchAll();
                     <?php endforeach; ?>
                 </tbody>
             </table>
-        </div>
+            </div>
     </div>
 
     <!-- Add/Edit Material Modal -->
@@ -389,6 +394,9 @@ $classes = $stmt->fetchAll();
                                       file:bg-indigo-50 file:text-indigo-700
                                       hover:file:bg-indigo-100">
                         <input type="hidden" name="type" id="fileType" value="pdf">
+                        <p class="mt-1 text-sm text-gray-500">
+                            Maximum file size: <?= MAX_FILE_SIZE / 1024 / 1024 ?>MB
+                        </p>
                         <div class="mt-2">
                             <label class="inline-flex items-center">
                                 <input type="radio" name="type" value="pdf" checked
