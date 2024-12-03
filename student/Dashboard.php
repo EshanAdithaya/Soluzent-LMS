@@ -1,67 +1,65 @@
 <?php
-// Enable error reporting and logging
+// Start session securely
+session_start([
+    'cookie_httponly' => true,
+    'cookie_secure' => true,
+    'use_only_cookies' => true
+]);
+
+require_once __DIR__ . '/../asset/php/config.php';
+require_once __DIR__ . '/../asset/php/db.php';
+
+// Enable error reporting
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-// Create logs directory if it doesn't exist
+// Set up logging
 $logDir = __DIR__ . '/../logs';
 if (!file_exists($logDir)) {
     mkdir($logDir, 0777, true);
 }
 ini_set('error_log', $logDir . '/error.log');
 
-// Start session
-session_start();
-
-// Debug log
-error_log('Session started with data: ' . print_r($_SESSION, true));
-
-// Include required files
-require_once '../asset/php/config.php';
-require_once '../asset/php/db.php';
-
-// Check session and role
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['role'])) {
-    header('Location: ../login.php');
-    exit;
-} elseif ($_SESSION['role'] !== 'student') {
+// Validate session and role
+if (!isset($_SESSION['user_id'], $_SESSION['role']) || $_SESSION['role'] !== 'student') {
     header('Location: ../login.php');
     exit;
 }
 
-// Test database connection
-try {
-    $pdo->query('SELECT 1');
-    error_log('Database connection successful');
-} catch (PDOException $e) {
-    error_log('Database connection failed: ' . $e->getMessage());
-    die('Database connection error. Please contact administrator.');
-}
+// User ID from session
+$userId = $_SESSION['user_id'];
 
-// Get user data
+// Fetch user and class data
 try {
-    $stmt = $pdo->prepare('
-        SELECT 
-            u.id,
-            u.name,
-            u.email,
-            u.last_access,
-            COUNT(DISTINCT e.class_id) as enrolled_count
-        FROM users u
-        LEFT JOIN enrollments e ON u.id = e.student_id
-        WHERE u.id = ? AND u.role = "student"
-        GROUP BY u.id
-    ');
-    
-    $stmt->execute([$_SESSION['user_id']]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    
+    $user = getUserData($pdo, $userId);
     if (!$user) {
-        error_log('No user found with ID: ' . $_SESSION['user_id']);
-        die('User data not found. Please try logging in again.');
+        error_log("User not found: $userId");
+        die('User not found. Please contact administrator.');
     }
 
-    // Get enrolled classes
+    $classes = getUserClasses($pdo, $userId);
+    $enrolledClasses = getEnrolledClasses($pdo, $userId);
+
+
+} catch (PDOException $e) {
+    error_log("Database error: " . $e->getMessage());
+    die('Error loading data. Please try again later.');
+}
+
+// Handle password updates
+$passwordUpdateMessage = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'updatePassword') {
+    $passwordUpdateMessage = handlePasswordUpdate($pdo, $userId, $_POST);
+}
+
+// Utility functions
+function getUserData($pdo, $userId) {
+    $stmt = $pdo->prepare('SELECT name, email, last_access FROM users WHERE id = ?');
+    $stmt->execute([$userId]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+function getUserClasses($pdo, $userId) {
     $stmt = $pdo->prepare('
         SELECT 
             c.id, 
@@ -75,54 +73,64 @@ try {
         GROUP BY c.id
         ORDER BY c.created_at DESC
     ');
-    
-    $stmt->execute([$_SESSION['user_id']]);
-    $classes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    error_log('Classes fetched: ' . count($classes));
-
-} catch (PDOException $e) {
-    error_log('Database Error: ' . $e->getMessage());
-    die('Error loading data. Please try again later.');
+    $stmt->execute([$userId]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+function getEnrolledClasses($pdo, $userId) {
+    $stmt = $pdo->prepare('
+        SELECT 
+            c.id,
+            c.name,
+            c.description,
+            COUNT(m.id) AS material_count
+        FROM classes c
+        LEFT JOIN enrollments e ON c.id = e.class_id
+        LEFT JOIN materials m ON c.id = m.class_id
+        WHERE e.student_id = ?
+        GROUP BY c.id
+        ORDER BY c.created_at DESC
+    ');
+   
+    $stmt->execute([$userId]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-// Handle password update
-$passwordUpdateMessage = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'updatePassword') {
+
+
+function handlePasswordUpdate($pdo, $userId, $postData) {
     try {
-        $currentPassword = $_POST['currentPassword'];
-        $newPassword = $_POST['newPassword'];
-        $confirmPassword = $_POST['confirmPassword'];
+        $currentPassword = $postData['currentPassword'];
+        $newPassword = $postData['newPassword'];
+        $confirmPassword = $postData['confirmPassword'];
 
         if ($newPassword !== $confirmPassword) {
-            $passwordUpdateMessage = 'New passwords do not match';
-        } else {
-            $stmt = $pdo->prepare('SELECT password FROM users WHERE id = ?');
-            $stmt->execute([$_SESSION['user_id']]);
-            $userData = $stmt->fetch();
-
-            if (password_verify($currentPassword, $userData['password'])) {
-                $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-                $stmt = $pdo->prepare('UPDATE users SET password = ? WHERE id = ?');
-                $stmt->execute([$hashedPassword, $_SESSION['user_id']]);
-                $passwordUpdateMessage = 'Password updated successfully!';
-            } else {
-                $passwordUpdateMessage = 'Current password is incorrect';
-            }
+            return 'New passwords do not match';
         }
+
+        $stmt = $pdo->prepare('SELECT password FROM users WHERE id = ?');
+        $stmt->execute([$userId]);
+        $userData = $stmt->fetch();
+
+        if (password_verify($currentPassword, $userData['password'])) {
+            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+            $stmt = $pdo->prepare('UPDATE users SET password = ? WHERE id = ?');
+            $stmt->execute([$hashedPassword, $userId]);
+            return 'Password updated successfully!';
+        } else {
+            return 'Current password is incorrect';
+        }
+
     } catch (PDOException $e) {
         error_log('Password Update Error: ' . $e->getMessage());
-        $passwordUpdateMessage = 'Database error occurred';
+        return 'Database error occurred';
     }
 }
 
 function formatDateTime($datetime) {
-    if (!$datetime) return 'Never';
-    return date('M j, Y g:i A', strtotime($datetime));
+    return $datetime ? date('M j, Y g:i A', strtotime($datetime)) : 'Never';
 }
 
-// Debug log user data
-error_log('User data loaded: ' . print_r($user, true));
+error_log('User data loaded successfully');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -170,7 +178,7 @@ error_log('User data loaded: ' . print_r($user, true));
             <div class="bg-white overflow-hidden shadow rounded-lg">
                 <div class="px-4 py-5 sm:p-6">
                     <dt class="text-sm font-medium text-gray-500">Enrolled Classes</dt>
-                    <dd class="mt-1 text-3xl font-semibold text-gray-900"><?php echo $user['enrolled_count']; ?></dd>
+                    <dd class="mt-1 text-3xl font-semibold text-gray-900"><?php echo $enrolledClasses['name']; ?></dd>
                 </div>
             </div>
             <div class="bg-white overflow-hidden shadow rounded-lg">

@@ -40,3 +40,454 @@
     [login_success] => 1
 )
 
+[03-Dec-2024 14:49:22 Europe/Berlin] PHP Deprecated:  Constant FILTER_SANITIZE_STRING is deprecated in C:\xampp\htdocs\github\nimru-Web\signup.php on line 60
+[03-Dec-2024 14:49:22 Europe/Berlin] PHP Deprecated:  Constant FILTER_SANITIZE_STRING is deprecated in C:\xampp\htdocs\github\nimru-Web\signup.php on line 62
+[03-Dec-2024 14:49:35 Europe/Berlin] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:50:03 Europe/Berlin] Session started with data: Array
+(
+)
+
+[03-Dec-2024 14:50:03 Europe/Berlin] PHP Warning:  require_once(../asset/php/config.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 20
+[03-Dec-2024 14:50:03 Europe/Berlin] PHP Fatal error:  Uncaught Error: Failed opening required '../asset/php/config.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:20
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 20
+[03-Dec-2024 14:50:36 Europe/Berlin] Session started with data: Array
+(
+)
+
+[03-Dec-2024 14:50:36 Europe/Berlin] PHP Warning:  require_once(../../asset/php/config.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 20
+[03-Dec-2024 14:50:36 Europe/Berlin] PHP Fatal error:  Uncaught Error: Failed opening required '../../asset/php/config.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:20
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 20
+[03-Dec-2024 14:51:21 Europe/Berlin] Session started with data: Array
+(
+)
+
+[03-Dec-2024 14:51:38 Europe/Berlin] Session started with data: Array
+(
+)
+
+[03-Dec-2024 14:51:43 Europe/Berlin] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 13:53:08 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 16
+[03-Dec-2024 13:53:08 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 13:53:08 UTC] PHP Warning:  Undefined variable $pdo in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 35
+[03-Dec-2024 13:53:08 UTC] PHP Fatal error:  Uncaught Error: Call to a member function query() on null in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:35
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 35
+[03-Dec-2024 13:54:09 UTC] Session started with data: Array
+(
+)
+
+[03-Dec-2024 13:54:19 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 13:54:19 UTC] PHP Warning:  Undefined variable $pdo in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 13:54:19 UTC] PHP Fatal error:  Uncaught Error: Call to a member function query() on null in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:36
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 13:55:48 UTC] Session started with data: Array
+(
+)
+
+[03-Dec-2024 13:56:46 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 13:56:46 UTC] PHP Warning:  Undefined variable $pdo in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 13:56:46 UTC] PHP Fatal error:  Uncaught Error: Call to a member function query() on null in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:36
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 13:58:19 UTC] Session started with data: Array
+(
+)
+
+[03-Dec-2024 13:58:22 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 13:58:22 UTC] PHP Warning:  Undefined variable $pdo in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 13:58:22 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:36
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 13:58:24 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 13:58:24 UTC] PHP Warning:  Undefined variable $pdo in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 13:58:24 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:36
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 13:58:25 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 13:58:25 UTC] PHP Warning:  Undefined variable $pdo in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 13:58:25 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:36
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 14:02:42 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:02:42 UTC] PHP Warning:  Undefined variable $pdo in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 14:02:42 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:36
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 14:02:43 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:02:43 UTC] PHP Warning:  Undefined variable $pdo in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 14:02:43 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:36
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 14:02:46 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:02:46 UTC] PHP Warning:  Undefined variable $pdo in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 14:02:46 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:36
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 14:02:46 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:02:46 UTC] PHP Warning:  Undefined variable $pdo in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 14:02:46 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:36
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 14:02:47 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:02:47 UTC] PHP Warning:  Undefined variable $pdo in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 14:02:47 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:36
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 14:04:03 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:04:03 UTC] PHP Warning:  Undefined variable $pdo in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 14:04:03 UTC] PHP Fatal error:  Uncaught Error: Call to a member function query() on null in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:36
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 14:04:05 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:04:05 UTC] PHP Warning:  Undefined variable $pdo in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 14:04:05 UTC] PHP Fatal error:  Uncaught Error: Call to a member function query() on null in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:36
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 14:04:06 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:04:06 UTC] PHP Warning:  Undefined variable $pdo in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 14:04:06 UTC] PHP Fatal error:  Uncaught Error: Call to a member function query() on null in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:36
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 36
+[03-Dec-2024 14:05:07 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:05:07 UTC] PHP Warning:  Undefined variable $pdo in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 38
+[03-Dec-2024 14:05:07 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:38
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 38
+[03-Dec-2024 14:05:08 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:05:08 UTC] PHP Warning:  Undefined variable $pdo in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 38
+[03-Dec-2024 14:05:08 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:38
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 38
+[03-Dec-2024 14:05:10 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:05:10 UTC] PHP Warning:  Undefined variable $pdo in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 38
+[03-Dec-2024 14:05:10 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:38
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 38
+[03-Dec-2024 14:05:11 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:05:11 UTC] PHP Warning:  Undefined variable $pdo in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 38
+[03-Dec-2024 14:05:11 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:38
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 38
+[03-Dec-2024 14:05:11 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:05:11 UTC] PHP Warning:  Undefined variable $pdo in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 38
+[03-Dec-2024 14:05:11 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:38
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 38
+[03-Dec-2024 14:05:11 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:05:11 UTC] PHP Warning:  Undefined variable $pdo in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 38
+[03-Dec-2024 14:05:11 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:38
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 38
+[03-Dec-2024 14:05:12 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:05:12 UTC] PHP Warning:  Undefined variable $pdo in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 38
+[03-Dec-2024 14:05:12 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:38
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 38
+[03-Dec-2024 14:08:58 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:08:58 UTC] Database connection successful
+[03-Dec-2024 14:08:59 UTC] Database Error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'student' in 'where clause'
+[03-Dec-2024 14:09:48 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:09:49 UTC] Database connection successful
+[03-Dec-2024 14:09:50 UTC] Database Error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'student' in 'where clause'
+[03-Dec-2024 14:10:02 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:10:02 UTC] Database connection successful
+[03-Dec-2024 14:10:04 UTC] Database Error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'student' in 'where clause'
+[03-Dec-2024 14:10:54 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:10:54 UTC] Database connection successful
+[03-Dec-2024 14:10:55 UTC] Database Error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'student' in 'where clause'
+[03-Dec-2024 14:14:13 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:14:14 UTC] Database connection successful
+[03-Dec-2024 14:14:15 UTC] Database Error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'student' in 'where clause'
+[03-Dec-2024 14:14:18 UTC] Session started with data: Array
+(
+    [user_id] => 3
+    [role] => student
+    [name] => Sithija Kaushalya
+    [login_success] => 1
+)
+
+[03-Dec-2024 14:14:18 UTC] Database connection successful
+[03-Dec-2024 14:14:19 UTC] Database Error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'student' in 'where clause'
+[03-Dec-2024 14:21:29 UTC] User data loaded successfully
+[03-Dec-2024 14:21:29 UTC] PHP Warning:  Undefined array key "enrolled_count" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 159
+[03-Dec-2024 14:33:15 UTC] User data loaded successfully
+[03-Dec-2024 14:33:15 UTC] PHP Warning:  Undefined array key "enrollments" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 159
+[03-Dec-2024 14:33:38 UTC] User data loaded successfully
+[03-Dec-2024 14:33:38 UTC] PHP Warning:  Undefined array key "class" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 159
+[03-Dec-2024 14:36:36 UTC] User data loaded successfully
+[03-Dec-2024 14:36:36 UTC] PHP Warning:  Trying to access array offset on value of type int in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 159
+[03-Dec-2024 14:36:55 UTC] User data loaded successfully
+[03-Dec-2024 14:36:55 UTC] PHP Warning:  Undefined array key "class" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 159
+[03-Dec-2024 14:39:48 UTC] User data loaded successfully
+[03-Dec-2024 14:39:48 UTC] PHP Warning:  Undefined array key "name" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 159
+[03-Dec-2024 14:43:43 UTC] User data loaded successfully
+[03-Dec-2024 14:43:43 UTC] PHP Warning:  Undefined array key "e" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 160
+[03-Dec-2024 14:43:48 UTC] User data loaded successfully
+[03-Dec-2024 14:43:48 UTC] PHP Warning:  Undefined array key "e" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 160
+[03-Dec-2024 14:47:06 UTC] User data loaded successfully
+[03-Dec-2024 14:47:06 UTC] PHP Warning:  Undefined array key "e" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 160
+[03-Dec-2024 14:47:06 UTC] PHP Warning:  Undefined array key "last_access" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 166
+[03-Dec-2024 14:47:17 UTC] User data loaded successfully
+[03-Dec-2024 14:47:17 UTC] PHP Warning:  Undefined array key "e" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 160
+[03-Dec-2024 14:49:34 UTC] Database error: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'FROM users WHERE id = ?' at line 1
+[03-Dec-2024 14:49:37 UTC] Database error: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'FROM users WHERE id = ?' at line 1
+[03-Dec-2024 14:49:42 UTC] Database error: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'FROM users WHERE id = ?' at line 1
+[03-Dec-2024 14:50:09 UTC] User data loaded successfully
+[03-Dec-2024 14:50:09 UTC] PHP Warning:  Undefined array key "e" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 160
+[03-Dec-2024 14:50:51 UTC] User data loaded successfully
+[03-Dec-2024 14:50:51 UTC] PHP Warning:  Undefined array key "material_count" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 160
+[03-Dec-2024 15:00:27 UTC] User data loaded successfully
+[03-Dec-2024 15:00:27 UTC] PHP Warning:  Undefined array key "class_name" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 181
+[03-Dec-2024 15:00:33 UTC] User data loaded successfully
+[03-Dec-2024 15:00:33 UTC] PHP Warning:  Undefined array key "class_name" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 181
+[03-Dec-2024 15:02:31 UTC] User data loaded successfully
+[03-Dec-2024 15:02:31 UTC] PHP Warning:  Undefined array key "name" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 180
+[03-Dec-2024 15:02:56 UTC] User data loaded successfully
+[03-Dec-2024 15:02:56 UTC] PHP Warning:  Undefined array key "class_name" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 180
+[03-Dec-2024 15:06:06 UTC] User data loaded successfully
+[03-Dec-2024 15:06:06 UTC] PHP Warning:  Undefined array key "class_name" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 181
+[03-Dec-2024 15:06:11 UTC] User data loaded successfully
+[03-Dec-2024 15:06:11 UTC] PHP Warning:  Undefined array key "class_name" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 181
+[03-Dec-2024 15:08:47 UTC] User data loaded successfully
+[03-Dec-2024 15:08:47 UTC] PHP Warning:  Undefined array key "material_count" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 181
+[03-Dec-2024 15:09:02 UTC] User data loaded successfully
+[03-Dec-2024 15:09:02 UTC] PHP Warning:  Undefined array key "material_count" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 181
+[03-Dec-2024 15:09:07 UTC] User data loaded successfully
+[03-Dec-2024 15:09:07 UTC] PHP Warning:  Undefined array key "material_count" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 181
+[03-Dec-2024 15:10:48 UTC] User data loaded successfully
+[03-Dec-2024 15:10:48 UTC] PHP Warning:  Undefined array key "class_name" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 181
+[03-Dec-2024 15:11:53 UTC] User data loaded successfully
+[03-Dec-2024 15:11:53 UTC] PHP Warning:  Undefined array key "class_name" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 181
+[03-Dec-2024 15:16:08 UTC] User data loaded successfully
+[03-Dec-2024 15:16:08 UTC] PHP Warning:  Undefined array key "name" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 181
+[03-Dec-2024 15:16:14 UTC] User data loaded successfully
+[03-Dec-2024 15:16:14 UTC] PHP Warning:  Undefined array key "name" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 181
+[03-Dec-2024 15:18:19 UTC] User data loaded successfully
+[03-Dec-2024 15:18:19 UTC] PHP Warning:  Undefined array key "name" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 181
+[03-Dec-2024 15:21:03 UTC] User data loaded successfully
+[03-Dec-2024 15:21:03 UTC] PHP Warning:  Undefined array key "name" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 164
+[03-Dec-2024 15:21:34 UTC] User data loaded successfully
+[03-Dec-2024 15:21:34 UTC] PHP Warning:  Undefined array key "name" in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 181
+[03-Dec-2024 15:23:05 UTC] User data loaded successfully
