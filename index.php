@@ -26,7 +26,7 @@ session_start();
                     <?php if (isset($_SESSION['user_id'])): ?>
                         <a href="<?= $_SESSION['role'] === 'admin' ? 'admin/dashboard.php' : 'student/dashboard.php' ?>" 
                            class="text-gray-600 hover:text-gray-900">Dashboard</a>
-                        <button id="logoutBtn" class="text-gray-600 hover:text-gray-900">Logout</button>
+                       <a href="asset/php/logout.php"> <button id="logoutBtn" class="text-gray-600 hover:text-gray-900">Logout</button> </a>
                     <?php else: ?>
                         <a href="login.php" class="text-gray-600 hover:text-gray-900">Login</a>
                         <a href="signup.php" 
@@ -95,22 +95,6 @@ session_start();
         </div>
     </div>
 
-    <script>
-        // Logout functionality
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', async () => {
-                try {
-                    const response = await fetch('asset\php\logout.php');
-                    const data = await response.json();
-                    if (data.success) {
-                        window.location.href = 'index.php';
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                }
-            });
-        }
-    </script>
+   
 </body>
 </html>
