@@ -3,7 +3,7 @@
 require_once __DIR__ . '/../asset/php/config.php';
 
 // Check if user is logged in and is a student
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'student') {
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'student' || $_SESSION['role'] === 'admin') {
     // echo '<script>alert("Please login to access the dashboard."); window.location.href = "../login.php";</script>';
     exit;
 }

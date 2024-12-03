@@ -51,82 +51,82 @@ try {
 }
 
 // When saving form (in the POST handler):
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        try {
-            $pdo->beginTransaction();
-    
-            switch ($_POST['action']) {
-                case 'create':
-                    switch ($_POST['materialType']) {
-                        case 'video':
-                            $stmt = $pdo->prepare("
-                                INSERT INTO materials (class_id, title, type, content) 
-                                VALUES (?, ?, 'video', ?)
-                            ");
-                            $stmt->execute([
-                                $_POST['class_id'],
-                                $_POST['title'],
-                                $_POST['youtube_url']
-                            ]);
-                            break;
-    
-                        case 'link':
-                            $stmt = $pdo->prepare("
-                                INSERT INTO materials (class_id, title, type, content) 
-                                VALUES (?, ?, 'link', ?)
-                            ");
-                            $stmt->execute([
-                                $_POST['class_id'],
-                                $_POST['title'],
-                                $_POST['content']
-                            ]);
-                            break;
-    
-                        case 'file':
-                            // Your existing file upload code...
-                            break;
-                    }
-                    $_SESSION['success'] = "Material added successfully.";
-                    break;
-    
-                case 'update':
-                    $type = $_POST['materialType'];
-                    $content = $_POST['content'] ?? '';
-    
-                    if ($type === 'video') {
-                        $content = $_POST['youtube_url'];
-                    } elseif ($type === 'file' && isset($_FILES['file']) && $_FILES['file']['error'] === 0) {
-                        // Your existing file update code...
-                    }
-    
-                    $stmt = $pdo->prepare("
-                        UPDATE materials 
-                        SET title = ?, class_id = ?, type = ?, content = ?
-                        WHERE id = ?
-                    ");
-                    $stmt->execute([
-                        $_POST['title'],
-                        $_POST['class_id'],
-                        $type,
-                        $content,
-                        $_POST['material_id']
-                    ]);
-                    $_SESSION['success'] = "Material updated successfully.";
-                    break;
-    
-                // Keep your existing delete case...
-            }
-    
-            $pdo->commit();
-        } catch (Exception $e) {
-            $pdo->rollBack();
-            $_SESSION['error'] = $e->getMessage();
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+        $pdo->beginTransaction();
+
+        switch ($_POST['action']) {
+            case 'create':
+                switch ($_POST['materialType']) {
+                    case 'video':
+                        $stmt = $pdo->prepare("
+                            INSERT INTO materials (class_id, title, type, content) 
+                            VALUES (?, ?, 'youtubeLink', ?)
+                        ");
+                        $stmt->execute([
+                            $_POST['class_id'],
+                            $_POST['title'],
+                            $_POST['youtube_url']
+                        ]);
+                        break;
+
+                    case 'link':
+                        $stmt = $pdo->prepare("
+                            INSERT INTO materials (class_id, title, type, content) 
+                            VALUES (?, ?, 'link', ?)
+                        ");
+                        $stmt->execute([
+                            $_POST['class_id'],
+                            $_POST['title'],
+                            $_POST['content']
+                        ]);
+                        break;
+
+                    case 'file':
+                        // Your existing file upload code...
+                        break;
+                }
+                $_SESSION['success'] = "Material added successfully.";
+                break;
+
+            case 'update':
+                $type = $_POST['materialType'];
+                $content = $_POST['content'] ?? '';
+
+                if ($type === 'video') {
+                    $content = $_POST['youtube_url'];
+                } elseif ($type === 'file' && isset($_FILES['file']) && $_FILES['file']['error'] === 0) {
+                    // Your existing file update code...
+                }
+
+                $stmt = $pdo->prepare("
+                    UPDATE materials 
+                    SET title = ?, class_id = ?, type = ?, content = ?
+                    WHERE id = ?
+                ");
+                $stmt->execute([
+                    $_POST['title'],
+                    $_POST['class_id'],
+                    $type,
+                    $content,
+                    $_POST['material_id']
+                ]);
+                $_SESSION['success'] = "Material updated successfully.";
+                break;
+
+            // Keep your existing delete case...
         }
-    
-        // Change redirect to just refresh the current page
-        header('Location: ' . $_SERVER['PHP_SELF']);
-        exit;
+
+        $pdo->commit();
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        $_SESSION['error'] = $e->getMessage();
     }
+
+    // Change redirect to just refresh the current page
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit;
+}
 // Fetch all materials with class names
 $stmt = $pdo->query("
     SELECT m.*, c.name as class_name 
@@ -372,8 +372,8 @@ $classes = $stmt->fetchAll();
                     document.getElementById('file').required = true;
                     break;
                 case 'video':
-                    $stmt = $pdo->prepare("INSERT INTO materials (class_id, title, type, content) VALUES (?, ?, 'youtubeLink', ?)");
-                     $stmt->execute([$_POST['class_id'], $_POST['title'],$_POST['youtube_url']]);
+                    videoInput.classList.remove('hidden');
+                    document.getElementById('youtube_url').required = true;
                     break;
             }
         }
