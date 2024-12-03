@@ -1,7 +1,57 @@
 <?php
+// Error Reporting
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/logs/error.log');
+
+// Database Configuration
+define('DB_HOST', 'db-mysql-nyc3-14016-do-user-17700770-0.d.db.ondigitalocean.com');
+define('DB_NAME', 'defaultdb');
+define('DB_USER', 'doadmin');
+define('DB_PASS', 'AVNS_l3SW8eljPIvmmGNUCFK');
+define('DB_CHARSET', 'utf8mb4');
+define('DB_PORT', 25060);
+
+// Start Session
 session_start();
-require_once 'asset/php/config.php';
-require_once 'asset/php/db.php';
+
+// Database Connection
+try {
+    $options = [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false,
+        PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false
+    ];
+
+    // Handle SSL Certificate
+    $ssl_ca = __DIR__ . '/ca-certificate.crt';
+    if (!file_exists($ssl_ca)) {
+        $cert = file_get_contents('https://dl.cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem');
+        if ($cert) {
+            file_put_contents($ssl_ca, $cert);
+        }
+    }
+    
+    if (file_exists($ssl_ca)) {
+        $options[PDO::MYSQL_ATTR_SSL_CA] = $ssl_ca;
+    }
+
+    $dsn = sprintf(
+        "mysql:host=%s;port=%d;dbname=%s;charset=%s",
+        DB_HOST,
+        DB_PORT,
+        DB_NAME,
+        DB_CHARSET
+    );
+
+    $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+
+} catch (PDOException $e) {
+    error_log("Database Connection Error: " . $e->getMessage());
+    die("Connection failed. Please try again later.");
+}
 
 $response = ['success' => false, 'message' => ''];
 
@@ -34,25 +84,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Hash password
                 $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-                // Insert new user
+                // Insert new user with explicit role as student
                 $stmt = $pdo->prepare('
                     INSERT INTO users (name, email, phone, password, role, created_at) 
-                    VALUES (?, ?, ?, ?, "student", NOW())
+                    VALUES (?, ?, ?, ?, ?, NOW())
                 ');
 
-                $stmt->execute([$name, $email, $phone, $hashedPassword]);
+                $stmt->execute([$name, $email, $phone, $hashedPassword, 'student']);
 
-                $response = [
-                    'success' => true,
-                    'message' => 'Account created successfully! Please login.'
-                ];
-                
-                // Redirect to login page on success
-                header('Location: login.php');
-                exit;
+                if ($stmt->rowCount() > 0) {
+                    $response = [
+                        'success' => true,
+                        'message' => 'Account created successfully! Please login.'
+                    ];
+                    
+                    // Redirect to login page on success
+                    header('Location: login.php');
+                    exit;
+                } else {
+                    throw new Exception('Failed to insert user');
+                }
             }
-        } catch (PDOException $e) {
-            $response['message'] = 'Database error occurred';
+        } catch (Exception $e) {
+            $response['message'] = 'Database error occurred: ' . $e->getMessage();
             error_log($e->getMessage());
         }
     }
