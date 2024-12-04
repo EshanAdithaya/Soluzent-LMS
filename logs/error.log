@@ -496,3 +496,27 @@ Stack trace:
 [03-Dec-2024 16:46:55 UTC] User data loaded successfully
 [04-Dec-2024 08:00:54 Europe/Berlin] Database Connection Error: SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond
 [04-Dec-2024 08:02:10 Europe/Berlin] Database Connection Error: SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond
+[04-Dec-2024 13:28:54 Europe/Berlin] Database Connection Error: SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond
+[04-Dec-2024 13:29:42 Europe/Berlin] Database Connection Error: SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond
+[04-Dec-2024 15:04:44 UTC] PHP Warning:  Constant DB_HOST already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 11
+[04-Dec-2024 15:04:44 UTC] PHP Warning:  Constant DB_NAME already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 12
+[04-Dec-2024 15:04:44 UTC] PHP Warning:  Constant DB_USER already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 13
+[04-Dec-2024 15:04:44 UTC] PHP Warning:  Constant DB_PASS already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 14
+[04-Dec-2024 15:04:44 UTC] PHP Warning:  Constant DB_CHARSET already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 15
+[04-Dec-2024 15:04:44 UTC] PHP Warning:  Constant DB_PORT already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 16
+[04-Dec-2024 15:04:44 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\github\nimru-Web\signup.php on line 19
+[04-Dec-2024 15:05:22 UTC] PHP Warning:  Constant DB_HOST already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 11
+[04-Dec-2024 15:05:22 UTC] PHP Warning:  Constant DB_NAME already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 12
+[04-Dec-2024 15:05:22 UTC] PHP Warning:  Constant DB_USER already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 13
+[04-Dec-2024 15:05:22 UTC] PHP Warning:  Constant DB_PASS already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 14
+[04-Dec-2024 15:05:22 UTC] PHP Warning:  Constant DB_CHARSET already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 15
+[04-Dec-2024 15:05:22 UTC] PHP Warning:  Constant DB_PORT already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 16
+[04-Dec-2024 15:05:22 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\github\nimru-Web\signup.php on line 19
+[04-Dec-2024 15:05:23 UTC] PHP Deprecated:  Constant FILTER_SANITIZE_STRING is deprecated in C:\xampp\htdocs\github\nimru-Web\signup.php on line 62
+[04-Dec-2024 15:05:23 UTC] PHP Deprecated:  Constant FILTER_SANITIZE_STRING is deprecated in C:\xampp\htdocs\github\nimru-Web\signup.php on line 64
+[04-Dec-2024 15:05:45 UTC] User data loaded successfully
+[04-Dec-2024 15:05:45 UTC] PHP Warning:  Trying to access array offset on value of type bool in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 181
+[04-Dec-2024 15:08:36 UTC] User data loaded successfully
+[04-Dec-2024 15:08:52 UTC] User data loaded successfully
+[04-Dec-2024 15:09:25 UTC] User data loaded successfully
+[04-Dec-2024 15:09:45 UTC] User data loaded successfully

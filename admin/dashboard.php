@@ -1,8 +1,8 @@
 <?php
 session_start();
 
-require '../asset/php/config.php';
-require '../asset/php/db.php';
+require_once __DIR__ . '/../asset/php/config.php';
+require_once __DIR__ . '/../asset/php/db.php';
 
 
 
@@ -29,12 +29,13 @@ try {
     $newStudents = $stmt->fetchColumn();
 
     $stmt = $pdo->prepare('
-        SELECT name, email, DATE_FORMAT(created_at, "%Y-%m-%d") as joined_date
-        FROM users 
-        WHERE role = :role
-        ORDER BY created_at DESC 
-        LIMIT 5
-    ');
+    SELECT name, email, DATE_FORMAT(created_at, \'%Y-%m-%d\') as joined_date
+    FROM users 
+    WHERE role = :role
+    ORDER BY created_at DESC 
+    LIMIT 5
+');
+
     $stmt->execute(['role' => 'student']);
     $recentStudents = $stmt->fetchAll();
 
@@ -48,15 +49,15 @@ try {
     $stmt->execute();
     $recentMaterials = $stmt->fetchAll();
 
-    echo json_encode([
-        'success' => true,
-        'totalStudents' => $totalStudents,
-        'activeClasses' => $activeClasses,
-        'totalMaterials' => $totalMaterials,
-        'newStudents' => $newStudents,
-        'recentStudents' => $recentStudents,
-        'recentMaterials' => $recentMaterials
-    ]);
+    // echo json_encode([
+    //     'success' => true,
+    //     'totalStudents' => $totalStudents,
+    //     'activeClasses' => $activeClasses,
+    //     'totalMaterials' => $totalMaterials,
+    //     'newStudents' => $newStudents,
+    //     'recentStudents' => $recentStudents,
+    //     'recentMaterials' => $recentMaterials
+    // ]);
 } catch (PDOException $e) {
     error_log("Dashboard Error: " . $e->getMessage()); // Add this line
     echo json_encode(['success' => false, 'message' => 'Database error']);
@@ -76,25 +77,25 @@ try {
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="px-4 py-5 sm:p-6">
                 <dt class="text-sm font-medium text-gray-500">Total Students</dt>
-                <dd id="totalStudents" class="mt-1 text-3xl font-semibold text-gray-900">0</dd>
+                <dd id="totalStudents" class="mt-1 text-3xl font-semibold text-gray-900"><?php echo($totalStudents) ?></dd>
             </div>
         </div>
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="px-4 py-5 sm:p-6">
                 <dt class="text-sm font-medium text-gray-500">Active Classes</dt>
-                <dd id="activeClasses" class="mt-1 text-3xl font-semibold text-gray-900">0</dd>
+                <dd id="activeClasses" class="mt-1 text-3xl font-semibold text-gray-900"><?php echo($activeClasses) ?></dd>
             </div>
         </div>
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="px-4 py-5 sm:p-6">
                 <dt class="text-sm font-medium text-gray-500">Total Materials</dt>
-                <dd id="totalMaterials" class="mt-1 text-3xl font-semibold text-gray-900">0</dd>
+                <dd id="totalMaterials" class="mt-1 text-3xl font-semibold text-gray-900"><?php echo($totalMaterials) ?></dd>
             </div>
         </div>
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="px-4 py-5 sm:p-6">
                 <dt class="text-sm font-medium text-gray-500">New Students (This Week)</dt>
-                <dd id="newStudents" class="mt-1 text-3xl font-semibold text-gray-900">0</dd>
+                <dd id="newStudents" class="mt-1 text-3xl font-semibold text-gray-900"><?php echo($newStudents) ?></dd>
             </div>
         </div>
     </div>
@@ -106,7 +107,26 @@ try {
             <div class="px-4 py-5 sm:p-6">
                 <h3 class="text-lg font-medium text-gray-900">Recent Students</h3>
                 <div class="mt-4" id="recentStudentsList">
-                    <div class="animate-pulse">Loading...</div>
+                <?php
+if (!empty($recentStudents)) {
+    foreach ($recentStudents as $rstudents) {
+        ?>
+        <div class="flex items-center justify-between py-3 border-b">
+                <div>
+                    <p class="text-sm font-medium text-gray-900"><?php echo htmlspecialchars($rstudents['name']); ?></p>
+                    <p class="text-sm text-gray-500"><?php echo htmlspecialchars($rstudents['email']); ?></p>
+                </div>
+                <span class="text-sm text-gray-500"><?php echo htmlspecialchars($rstudents['joined_date']); ?></span>
+            </div>
+        
+        <?php
+    }
+} else {
+    echo '<div class="animate-pulse">No recent students available.</div>';
+}
+
+                ?>
+                    
                 </div>
             </div>
         </div>
@@ -116,68 +136,31 @@ try {
             <div class="px-4 py-5 sm:p-6">
                 <h3 class="text-lg font-medium text-gray-900">Recent Materials</h3>
                 <div class="mt-4" id="recentMaterialsList">
-                    <div class="animate-pulse">Loading...</div>
+                <?php 
+                if (!empty($recentMaterials)) {
+                    foreach ($recentMaterials as $material) {
+                        ?>
+                        <div class="flex items-center justify-between py-3 border-b">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900"><?php echo htmlspecialchars($material['title']); ?></p>
+                                <p class="text-sm text-gray-500"><?php echo htmlspecialchars($material['class_name']); ?></p>
+                            </div>
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-<?php echo $material['type'] === 'pdf' ? 'red' : 'blue'; ?>-100 text-<?php echo $material['type'] === 'pdf' ? 'red' : 'blue'; ?>-800">
+                                <?php echo htmlspecialchars($material['type']); ?>
+                            </span>
+                        </div>
+                        <?php
+                    }
+                } else {
+                    echo '<div class="animate-pulse">No recent materials available.</div>';
+                }
+                
+                ?>
+                    
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<script>
-    async function fetchDashboardData() {
-        try {
-            const response = await fetch('dashboard.php');
-            if (!response.ok) {
-                throw new Error('Failed to load data: ' + response.statusText);
-            }
-            const data = await response.json();
 
-            if (data.success) {
-                updateDashboard(data);
-            } else {
-                alert('Error loading dashboard data');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('An error occurred while fetching data');
-            // An error occurred while fetching data
-        }
-    }
-
-    function updateDashboard(data) {
-        // Update stats
-        document.getElementById('totalStudents').textContent = data.totalStudents;
-        document.getElementById('activeClasses').textContent = data.activeClasses;
-        document.getElementById('totalMaterials').textContent = data.totalMaterials;
-        document.getElementById('newStudents').textContent = data.newStudents;
-
-        // Update recent students list
-        const studentsList = document.getElementById('recentStudentsList');
-        studentsList.innerHTML = data.recentStudents.map(student => `
-            <div class="flex items-center justify-between py-3 border-b">
-                <div>
-                    <p class="text-sm font-medium text-gray-900">${student.name}</p>
-                    <p class="text-sm text-gray-500">${student.email}</p>
-                </div>
-                <span class="text-sm text-gray-500">${student.joined_date}</span>
-            </div>
-        `).join('');
-
-        // Update recent materials list
-        const materialsList = document.getElementById('recentMaterialsList');
-        materialsList.innerHTML = data.recentMaterials.map(material => `
-            <div class="flex items-center justify-between py-3 border-b">
-                <div>
-                    <p class="text-sm font-medium text-gray-900">${material.title}</p>
-                    <p class="text-sm text-gray-500">${material.class_name}</p>
-                </div>
-                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-${material.type === 'pdf' ? 'red' : 'blue'}-100 text-${material.type === 'pdf' ? 'red' : 'blue'}-800">
-                    ${material.type}
-                </span>
-            </div>
-        `).join('');
-    }
-
-    // Load dashboard data on page load
-    document.addEventListener('DOMContentLoaded', fetchDashboardData);
-</script>

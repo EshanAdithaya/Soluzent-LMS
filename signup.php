@@ -1,5 +1,7 @@
 <?php
 // Error Reporting
+require 'asset/php/config.php';
+require 'asset/php/db.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
