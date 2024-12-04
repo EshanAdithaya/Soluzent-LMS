@@ -85,6 +85,21 @@ foreach ($materials as $material) {
             margin: 0 auto;
             border-radius: 8px;
             overflow: hidden;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        
+        /* Hide the default right-click menu */
+        .plyr__video-wrapper::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 10;
         }
     </style>
 </head>
@@ -201,7 +216,7 @@ foreach ($materials as $material) {
                                             <div class="flex justify-center mt-4">
                                                 <div class="plyr__video-embed" id="player-<?= htmlspecialchars($material['id']) ?>">
                                                     <iframe
-                                                        src="https://www.youtube.com/embed/<?= htmlspecialchars($video_id) ?>?origin=<?= urlencode(APP_URL) ?>&amp;iv_load_policy=3&amp;modestbranding=1&amp;playsinline=1&amp;showinfo=0&amp;rel=0&amp;enablejsapi=1"
+                                                        src="https://www.youtube.com/embed/<?= htmlspecialchars($video_id) ?>?origin=<?= urlencode(APP_URL) ?>&amp;iv_load_policy=3&amp;modestbranding=1&amp;playsinline=1&amp;showinfo=0&amp;rel=0&amp;enablejsapi=1&amp;nocookie=1"
                                                         allowfullscreen
                                                         allowtransparency
                                                         allow="autoplay"
@@ -210,10 +225,26 @@ foreach ($materials as $material) {
                                             </div>
                                             <script>
                                                 document.addEventListener('DOMContentLoaded', function() {
+                                                    // Initialize Plyr with restricted controls
                                                     const player = new Plyr('#player-<?= htmlspecialchars($material['id']) ?>', {
-                                                        controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
-                                                        settings: ['captions', 'quality', 'speed'],
-                                                        youtube: { noCookie: true, rel: 0, showinfo: 0, iv_load_policy: 3 }
+                                                        controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
+                                                        settings: ['quality', 'speed'],
+                                                        youtube: {
+                                                            noCookie: true,
+                                                            rel: 0,
+                                                            showinfo: 0,
+                                                            iv_load_policy: 3,
+                                                            modestbranding: 1,
+                                                            playsinline: 1
+                                                        },
+                                                        tooltips: { controls: false, seek: false }
+                                                    });
+
+                                                    // Prevent right-click on the player
+                                                    const playerElement = document.getElementById('player-<?= htmlspecialchars($material['id']) ?>');
+                                                    playerElement.addEventListener('contextmenu', (e) => {
+                                                        e.preventDefault();
+                                                        return false;
                                                     });
                                                 });
                                             </script>
@@ -233,7 +264,7 @@ foreach ($materials as $material) {
                                             </a>
                                         <?php elseif ($material['type'] === 'link'): ?>
                                             <a href="<?= htmlspecialchars($material['content']) ?>" 
-                                               target="_blank"
+                                            target="_blank"
                                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200">
                                                 Open Link
                                             </a>
@@ -249,9 +280,23 @@ foreach ($materials as $material) {
     </div>
 
     <script>
-        // Initialize all Plyr instances
-        document.addEventListener('DOMContentLoaded', function() {
-            const players = Plyr.setup('.plyr__video-embed');
+        // Global right-click prevention on video elements
+        document.addEventListener('contextmenu', function(e) {
+            if (e.target.closest('.plyr')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // Additional security measures
+        window.addEventListener('keydown', function(e) {
+            // Prevent common keyboard shortcuts for viewing source/inspecting
+            if ((e.ctrlKey && (e.key === 'u' || e.key === 's')) || 
+                (e.key === 'F12') || 
+                (e.ctrlKey && e.shiftKey && e.key === 'i')) {
+                e.preventDefault();
+                return false;
+            }
         });
 
         // Logout functionality
