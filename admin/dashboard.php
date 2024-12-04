@@ -4,10 +4,7 @@ session_start();
 require '../asset/php/config.php';
 require '../asset/php/db.php';
 
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-    exit;
-}
+
 
 try {
     // Prepare statements for secure data fetching
