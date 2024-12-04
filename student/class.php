@@ -31,7 +31,7 @@ $stmt->execute([$class_id]);
 $class = $stmt->fetch();
 echo "<script>console.log('Class details: " . json_encode($class) . "');</script>";
 
-// Get class materials
+// Get class materials grouped by week
 $stmt = $pdo->prepare("
     SELECT * FROM materials 
     WHERE class_id = ? 
@@ -39,7 +39,13 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute([$class_id]);
 $materials = $stmt->fetchAll();
-echo "<script>console.log('Class materials: " . json_encode($materials) . "');</script>";
+
+// Group materials by week
+$materialsByWeek = [];
+foreach ($materials as $material) {
+    $weekStart = date('Y-m-d', strtotime('monday this week', strtotime($material['created_at'])));
+    $materialsByWeek[$weekStart][] = $material;
+}
 ?>
 
 <!DOCTYPE html>
@@ -49,6 +55,38 @@ echo "<script>console.log('Class materials: " . json_encode($materials) . "');</
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($class['name']) ?> - EduPortal</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Add Plyr CSS and JS -->
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    <style>
+        .week-divider {
+            position: relative;
+            text-align: center;
+            margin: 2rem 0;
+        }
+        .week-divider::before,
+        .week-divider::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: calc(50% - 100px);
+            height: 1px;
+            background-color: #e5e7eb;
+        }
+        .week-divider::before {
+            left: 0;
+        }
+        .week-divider::after {
+            right: 0;
+        }
+        .plyr {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+    </style>
 </head>
 <body class="bg-gray-50">
     <!-- Navigation -->
@@ -93,54 +131,129 @@ echo "<script>console.log('Class materials: " . json_encode($materials) . "');</
                 <h3 class="text-lg font-medium text-gray-900">Course Materials</h3>
             </div>
             <div class="border-t border-gray-200">
-                <?php if (empty($materials)): ?>
+                <?php if (empty($materialsByWeek)): ?>
                     <div class="px-4 py-5 sm:px-6 text-gray-500">
                         No materials available yet.
                     </div>
                 <?php else: ?>
-                    <ul class="divide-y divide-gray-200">
-                        <?php foreach ($materials as $material): ?>
-                            <li class="px-4 py-4 sm:px-6 hover:bg-gray-50">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <!-- Icon based on material type -->
-                                        <div class="flex-shrink-0">
-                                            <?php if ($material['type'] === 'pdf'): ?>
-                                                <svg class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                                </svg>
-                                            <?php elseif ($material['type'] === 'link'): ?>
-                                                <svg class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                                                </svg>
-                                            <?php else: ?>
-                                                <svg class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                            <?php endif; ?>
+                    <?php foreach ($materialsByWeek as $weekStart => $weekMaterials): ?>
+                        <div class="week-divider">
+                            <span class="bg-white px-4 text-sm text-gray-500">
+                                Week of <?= date('F j, Y', strtotime($weekStart)) ?>
+                            </span>
+                        </div>
+                        <ul class="divide-y divide-gray-200">
+                            <?php foreach ($weekMaterials as $material): ?>
+                                <li class="px-4 py-4 sm:px-6 hover:bg-gray-50">
+                                    <div>
+                                        <div class="flex items-center">
+                                            <!-- Icon based on material type -->
+                                            <div class="flex-shrink-0">
+                                                <?php if ($material['type'] === 'pdf'): ?>
+                                                    <svg class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                    </svg>
+                                                <?php elseif ($material['type'] === 'link'): ?>
+                                                    <svg class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                                    </svg>
+                                                <?php elseif ($material['type'] === 'youtubeLink'): ?>
+                                                    <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                <?php else: ?>
+                                                    <svg class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                    </svg>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="ml-4">
+                                                <h4 class="text-lg font-medium text-gray-900"><?= htmlspecialchars($material['title']) ?></h4>
+                                                <p class="text-sm text-gray-500">
+                                                    Added on <?= date('F j, Y', strtotime($material['created_at'])) ?>
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div class="ml-4">
-                                            <h4 class="text-lg font-medium text-gray-900"><?= htmlspecialchars($material['title']) ?></h4>
-                                            <p class="text-sm text-gray-500">
-                                                Added on <?= date('F j, Y', strtotime($material['created_at'])) ?>
-                                            </p>
-                                        </div>
+                                        
+                                        <?php if ($material['type'] === 'youtubeLink'): ?>
+                                            <?php
+                                                // Extract video ID if not already stored
+                                                if (!$material['video_id']) {
+                                                    $video_id = '';
+                                                    $url = $material['content'];
+                                                    
+                                                    // Pattern for youtu.be format
+                                                    if (preg_match('/^.*youtu\.be\/([^\/\?\&]+)/', $url, $matches)) {
+                                                        $video_id = $matches[1];
+                                                    }
+                                                    // Pattern for youtube.com format
+                                                    else if (preg_match('/^.*youtube\.com\/(?:watch\?v=|embed\/|v\/)([^\/\?\&]+)/', $url, $matches)) {
+                                                        $video_id = $matches[1];
+                                                    }
+                                                    
+                                                    // Remove any additional parameters
+                                                    $video_id = strtok($video_id, '?&');
+                                                } else {
+                                                    $video_id = $material['video_id'];
+                                                }
+                                            ?>
+                                            <div class="flex justify-center mt-4">
+                                                <div class="plyr__video-embed" id="player-<?= htmlspecialchars($material['id']) ?>">
+                                                    <iframe
+                                                        src="https://www.youtube.com/embed/<?= htmlspecialchars($video_id) ?>?origin=<?= urlencode(APP_URL) ?>&amp;iv_load_policy=3&amp;modestbranding=1&amp;playsinline=1&amp;showinfo=0&amp;rel=0&amp;enablejsapi=1"
+                                                        allowfullscreen
+                                                        allowtransparency
+                                                        allow="autoplay"
+                                                    ></iframe>
+                                                </div>
+                                            </div>
+                                            <script>
+                                                document.addEventListener('DOMContentLoaded', function() {
+                                                    const player = new Plyr('#player-<?= htmlspecialchars($material['id']) ?>', {
+                                                        controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
+                                                        settings: ['captions', 'quality', 'speed'],
+                                                        youtube: { noCookie: true, rel: 0, showinfo: 0, iv_load_policy: 3 }
+                                                    });
+                                                });
+                                            </script>
+                                        <?php elseif ($material['type'] === 'image'): ?>
+                                            <div class="mt-4">
+                                                <img 
+                                                    src="<?= APP_URL ?>/uploads/materials/<?= htmlspecialchars($material['content']) ?>" 
+                                                    alt="<?= htmlspecialchars($material['title']) ?>"
+                                                    class="max-w-full h-auto rounded-lg shadow-lg"
+                                                >
+                                            </div>
+                                        <?php elseif ($material['type'] === 'pdf'): ?>
+                                            <a href="<?= APP_URL ?>/uploads/materials/<?= htmlspecialchars($material['content']) ?>" 
+                                               download
+                                               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
+                                                Download PDF
+                                            </a>
+                                        <?php elseif ($material['type'] === 'link'): ?>
+                                            <a href="<?= htmlspecialchars($material['content']) ?>" 
+                                               target="_blank"
+                                               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200">
+                                                Open Link
+                                            </a>
+                                        <?php endif; ?>
                                     </div>
-                                    <a href="<?= htmlspecialchars($material['content']) ?>" 
-                                       target="_blank"
-                                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200">
-                                        Access Material
-                                    </a>
-                                </div>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php endforeach; ?>
                 <?php endif; ?>
             </div>
         </div>
     </div>
 
     <script>
+        // Initialize all Plyr instances
+        document.addEventListener('DOMContentLoaded', function() {
+            const players = Plyr.setup('.plyr__video-embed');
+        });
+
         // Logout functionality
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             try {
