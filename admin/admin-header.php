@@ -1,13 +1,5 @@
 <?php
-// includes/admin-header.php
 
-// Check admin authentication
-// if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-//     header('Location: ../login.php');
-//     exit;
-// }
-
-// Get current page for active nav highlighting
 $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 
