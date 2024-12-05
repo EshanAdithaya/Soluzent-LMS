@@ -4,7 +4,34 @@ require_once __DIR__ . '/../asset/php/db.php';
 
 // Get class ID from URL
 $class_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-echo "<script>console.log('Class ID: " . $class_id . "');</script>";
+
+// Check if class ID is valid
+if ($class_id <= 0) {
+    die('
+        <div class="min-h-screen flex items-center justify-center bg-gray-50">
+            <div class="text-center">
+                <h1 class="text-4xl font-bold text-gray-800 mb-4">Invalid Class</h1>
+                <p class="text-gray-600 mb-4">The class you are looking for is not available.</p>
+                <a href="dashboard.php" class="text-blue-500 hover:text-blue-600">Return to Dashboard</a>
+            </div>
+        </div>
+    ');
+}
+
+// Check if class exists
+$stmt = $pdo->prepare("SELECT id FROM classes WHERE id = ?");
+$stmt->execute([$class_id]);
+if (!$stmt->fetch()) {
+    die('
+        <div class="min-h-screen flex items-center justify-center bg-gray-50">
+            <div class="text-center">
+                <h1 class="text-4xl font-bold text-gray-800 mb-4">Class Not Found</h1>
+                <p class="text-gray-600 mb-4">The class you are looking for does not exist.</p>
+                <a href="dashboard.php" class="text-blue-500 hover:text-blue-600">Return to Dashboard</a>
+            </div>
+        </div>
+    ');
+}
 
 // Verify student's enrollment in this class
 $stmt = $pdo->prepare("
@@ -14,11 +41,16 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute([$_SESSION['user_id'], $class_id]);
 if (!$stmt->fetch()) {
-    echo "<script>console.log('Student not enrolled in class ID: " . $class_id . "');</script>";
-    // header('Location: dashboard.php');
-    exit;
+    die('
+        <div class="min-h-screen flex items-center justify-center bg-gray-50">
+            <div class="text-center">
+                <h1 class="text-4xl font-bold text-gray-800 mb-4">Not Permitted</h1>
+                <p class="text-gray-600 mb-4">You are not enrolled in this class.</p>
+                <a href="dashboard.php" class="text-blue-500 hover:text-blue-600">Return to Dashboard</a>
+            </div>
+        </div>
+    ');
 }
-echo "<script>console.log('Student enrolled in class ID: " . $class_id . "');</script>";
 
 // Get class details
 $stmt = $pdo->prepare("
