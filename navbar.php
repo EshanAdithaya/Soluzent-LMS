@@ -15,11 +15,11 @@ class Navigation {
     private function setupMenuItems() {
         $this->menuItems = [
             'public' => [
-                ['url' => 'index.php', 'text' => 'Home'],
-                ['url' => 'about.php', 'text' => 'About Us'],
-                ['url' => 'features.php', 'text' => 'Features'],
-                ['url' => 'pricing.php', 'text' => 'Pricing'],
-                ['url' => 'contact.php', 'text' => 'Contact'],
+                ['url' => '/index.php', 'text' => 'Home'],
+                ['url' => '/about.php', 'text' => 'About Us'],
+                ['url' => '/features.php', 'text' => 'Features'],
+                ['url' => '/pricing.php', 'text' => 'Pricing'],
+                ['url' => '/contact.php', 'text' => 'Contact'],
             ],
             'auth' => [
                 'student' => [
