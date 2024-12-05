@@ -2,32 +2,46 @@
 require_once 'asset/php/config.php';
 require_once 'asset/php/db.php';
 
-if (!is_logged_in()) {
-    header('Location: login.php');
-    exit;
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        // Check for existing application
-        $check = $pdo->prepare("SELECT id FROM teacher_profiles WHERE user_id = ?");
-        $check->execute([$_SESSION['user_id']]);
+        // Check if email already exists
+        $check = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+        $check->execute([$_POST['email']]);
         
         if ($check->rowCount() > 0) {
-            $error = "You already have a teacher application submitted.";
+            $error = "Email already exists. Please use a different email or login if you already have an account.";
         } else {
-            // Insert the application with required fields
+            $pdo->beginTransaction();
+
+            // First create the user account
+            $hashedPassword = password_hash($_POST['password'], PASSWORD_DEFAULT);
+            
+            $stmt = $pdo->prepare("
+                INSERT INTO users (name, email, phone, password, role)
+                VALUES (?, ?, ?, ?, 'student')
+            ");
+            
+            $stmt->execute([
+                $_POST['name'],
+                $_POST['email'],
+                $_POST['phone'],
+                $hashedPassword
+            ]);
+            
+            $userId = $pdo->lastInsertId();
+
+            // Then create the teacher profile
             $stmt = $pdo->prepare("
                 INSERT INTO teacher_profiles (
                     user_id, email, phone, qualification, expertise, bio,
                     address, city, state, postal_code,
                     teaching_certifications, linkedin_profile,
-                    emergency_contact_phone
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    emergency_contact_phone, status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
             ");
             
             $stmt->execute([
-                $_SESSION['user_id'],
+                $userId,
                 $_POST['email'],
                 $_POST['phone'],
                 $_POST['qualification'],
@@ -42,10 +56,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_POST['emergency_contact_phone'] ?? null
             ]);
 
+            $pdo->commit();
+
+            // Log the user in
+            $_SESSION['user_id'] = $userId;
+            $_SESSION['role'] = 'student';
+            $_SESSION['name'] = $_POST['name'];
+            $_SESSION['email'] = $_POST['email'];
+
             header('Location: teacher-apply.php?success=1');
             exit;
         }
     } catch (PDOException $e) {
+        $pdo->rollBack();
         error_log($e->getMessage());
         $error = "An error occurred while submitting your application.";
     }
@@ -75,30 +98,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <?php if (isset($_GET['success'])): ?>
                 <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
-                    <p class="text-green-700">Your application has been submitted successfully!</p>
+                    <p class="text-green-700">Your application has been submitted successfully! You can now login with your email and password.</p>
                 </div>
             <?php endif; ?>
 
-            <form method="POST" class="space-y-6">
-                <!-- Required Fields -->
-                <div class="grid grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 required">Email</label>
-                        <input type="email" name="email" required
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            <form method="POST" class="space-y-6" onsubmit="return validateForm()">
+                <!-- Account Information -->
+                <div class="border-b pb-6">
+                    <h2 class="text-lg font-medium mb-4">Account Information</h2>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 required">Full Name</label>
+                            <input type="text" name="name" required
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 required">Email</label>
+                            <input type="email" name="email" required
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
                     </div>
-                    <div>
+                    <div class="grid grid-cols-2 gap-6 mt-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 required">Password</label>
+                            <input type="password" name="password" id="password" required minlength="6"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 required">Confirm Password</label>
+                            <input type="password" name="confirm_password" id="confirm_password" required minlength="6"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                    <div class="mt-4">
                         <label class="block text-sm font-medium text-gray-700 required">Phone Number</label>
                         <input type="tel" name="phone" required
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     </div>
                 </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Address</label>
-                            <textarea name="address" required rows="2"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
-                        </div>
 
+                <!-- Required Teaching Information -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 required">Educational Qualifications</label>
                     <textarea name="qualification" required rows="3"
@@ -120,12 +159,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         placeholder="Tell us about your teaching experience and approach"></textarea>
                 </div>
 
-                <!-- Optional Fields -->
+                <!-- Optional Information -->
                 <div class="border-t pt-6">
                     <h2 class="text-lg font-medium mb-4">Additional Information (Optional)</h2>
                     
                     <div class="space-y-6">
-                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Address</label>
+                            <textarea name="address" rows="2"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+                        </div>
 
                         <div class="grid grid-cols-3 gap-6">
                             <div>
@@ -176,5 +219,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </form>
         </div>
     </div>
+
+    <script>
+    function validateForm() {
+        const password = document.getElementById('password').value;
+        const confirm_password = document.getElementById('confirm_password').value;
+
+        if (password !== confirm_password) {
+            alert("Passwords do not match!");
+            return false;
+        }
+
+        if (password.length < 6) {
+            alert("Password must be at least 6 characters long!");
+            return false;
+        }
+
+        return true;
+    }
+    </script>
 </body>
 </html>

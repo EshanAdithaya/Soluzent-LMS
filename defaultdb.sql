@@ -105,3 +105,21 @@ UPDATE `materials` m
 JOIN `classes` c ON m.`class_id` = c.`id`
 SET m.`added_by` = COALESCE(c.`created_by`, 1);
 
+
+
+--check the database when update this part only
+-- Update teacher_profiles with essential fields
+ALTER TABLE teacher_profiles
+ADD COLUMN address TEXT AFTER user_id,
+ADD COLUMN city VARCHAR(100) AFTER address,
+ADD COLUMN state VARCHAR(100) AFTER city,
+ADD COLUMN postal_code VARCHAR(20) AFTER state,
+ADD COLUMN phone VARCHAR(20) AFTER postal_code,
+ADD COLUMN email VARCHAR(100) AFTER phone,
+ADD COLUMN qualification TEXT AFTER email,
+ADD COLUMN expertise TEXT AFTER qualification,
+ADD COLUMN teaching_certifications TEXT AFTER expertise,
+ADD COLUMN bio TEXT AFTER teaching_certifications,
+ADD COLUMN linkedin_profile VARCHAR(255) AFTER bio,
+ADD COLUMN emergency_contact_phone VARCHAR(20) AFTER linkedin_profile,
+ADD COLUMN status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending' AFTER emergency_contact_phone;
