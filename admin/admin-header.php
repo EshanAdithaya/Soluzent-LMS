@@ -38,6 +38,7 @@ $admin_prefix = $is_profile_page ? 'admin/' : '';
                         $admin_prefix . 'classes.php' => 'Classes',
                         $admin_prefix . 'students.php' => 'Students',
                         $admin_prefix . 'materials.php' => 'Materials',
+                        $admin_prefix . 'teacher-applications.php' => 'Teacher_Applications',
                         ($is_profile_page ? '' : '../') . 'student/Dashboard.php' => 'Student Dashboard'
                     ];
 
