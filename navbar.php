@@ -90,9 +90,13 @@ class Navigation {
                 <!-- Logo -->
                 <div class="flex">
                     <div class="flex-shrink-0 flex items-center">
-                        <a href="<?= $this->getFullUrl('index.php') ?>" class="text-2xl font-bold text-indigo-600">
-                            SOLUZENT LMS
-                        </a>
+                        <?php if ($this->isActive('index.php')): ?>
+                            <span class="text-2xl font-bold text-indigo-600">SOLUZENT LMS</span>
+                        <?php else: ?>
+                            <a href="<?= $this->getFullUrl('index.php') ?>" class="text-2xl font-bold text-indigo-600">
+                                SOLUZENT LMS
+                            </a>
+                        <?php endif; ?>
                     </div>
                 </div>
 
