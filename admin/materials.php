@@ -1,6 +1,15 @@
 <?php
 require_once __DIR__ . '/../asset/php/config.php';
+require_once '../asset/php/db.php';
 session_start();
+
+// Check if user is logged in and has appropriate role
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['admin', 'teacher'])) {
+    header('Location: login.php');
+    exit;
+}
+
+$isTeacher = $_SESSION['role'] === 'teacher';
 
 // Handle file uploads
 function handleFileUpload($file) {
@@ -33,19 +42,6 @@ function handleFileUpload($file) {
     throw new Exception("Failed to upload file.");
 }
 
-// Database connection
-try {
-    $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET . ";port=" . DB_PORT;
-    $pdo = new PDO($dsn, DB_USER, DB_PASS, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES => false,
-    ]);
-} catch (PDOException $e) {
-    error_log("Database connection failed: " . $e->getMessage());
-    die("Database connection failed. Please try again later.");
-}
-
 // When saving form (in the POST handler):
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
@@ -56,48 +52,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 switch ($_POST['materialType']) {
                     case 'video':
                         $stmt = $pdo->prepare("
-                            INSERT INTO materials (class_id, title, type, content) 
-                            VALUES (?, ?, 'youtubeLink', ?)
+                            INSERT INTO materials (class_id, title, type, content, added_by) 
+                            VALUES (?, ?, 'youtubeLink', ?, ?)
                         ");
                         $stmt->execute([
                             $_POST['class_id'],
                             $_POST['title'],
-                            $_POST['youtube_url']
+                            $_POST['youtube_url'],
+                            $_SESSION['user_id']
                         ]);
                         break;
 
                     case 'link':
                         $stmt = $pdo->prepare("
-                            INSERT INTO materials (class_id, title, type, content) 
-                            VALUES (?, ?, 'link', ?)
+                            INSERT INTO materials (class_id, title, type, content, added_by) 
+                            VALUES (?, ?, 'link', ?, ?)
                         ");
                         $stmt->execute([
                             $_POST['class_id'],
                             $_POST['title'],
-                            $_POST['content']
+                            $_POST['content'],
+                            $_SESSION['user_id']
                         ]);
                         break;
 
                     case 'file':
-                        // Your existing file upload code...
+                        if (isset($_FILES['file']) && $_FILES['file']['error'] === 0) {
+                            $fileName = handleFileUpload($_FILES['file']);
+                            $stmt = $pdo->prepare("
+                                INSERT INTO materials (class_id, title, type, content, added_by) 
+                                VALUES (?, ?, ?, ?, ?)
+                            ");
+                            $stmt->execute([
+                                $_POST['class_id'],
+                                $_POST['title'],
+                                $_POST['type'],
+                                $fileName,
+                                $_SESSION['user_id']
+                            ]);
+                        }
                         break;
                 }
                 $_SESSION['success'] = "Material added successfully.";
                 break;
 
             case 'update':
+                // Verify ownership if teacher
+                if ($isTeacher) {
+                    $stmt = $pdo->prepare("
+                        SELECT COUNT(*) FROM materials 
+                        WHERE id = ? AND added_by = ?
+                    ");
+                    $stmt->execute([$_POST['material_id'], $_SESSION['user_id']]);
+                    if ($stmt->fetchColumn() == 0) {
+                        throw new Exception("You don't have permission to edit this material.");
+                    }
+                }
+
                 $type = $_POST['materialType'];
                 $content = $_POST['content'] ?? '';
 
                 if ($type === 'video') {
                     $content = $_POST['youtube_url'];
                 } elseif ($type === 'file' && isset($_FILES['file']) && $_FILES['file']['error'] === 0) {
-                    // Your existing file update code...
+                    $content = handleFileUpload($_FILES['file']);
                 }
 
                 $stmt = $pdo->prepare("
                     UPDATE materials 
-                    SET title = ?, class_id = ?, type = ?, content = ?
+                    SET title = ?, class_id = ?, type = ?, content = ?, added_by = ?
                     WHERE id = ?
                 ");
                 $stmt->execute([
@@ -105,12 +128,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_POST['class_id'],
                     $type,
                     $content,
+                    $_SESSION['user_id'],
                     $_POST['material_id']
                 ]);
                 $_SESSION['success'] = "Material updated successfully.";
                 break;
 
-            // Keep your existing delete case...
+            case 'delete':
+                // Verify ownership if teacher
+                if ($isTeacher) {
+                    $stmt = $pdo->prepare("
+                        SELECT COUNT(*) FROM materials 
+                        WHERE id = ? AND added_by = ?
+                    ");
+                    $stmt->execute([$_POST['material_id'], $_SESSION['user_id']]);
+                    if ($stmt->fetchColumn() == 0) {
+                        throw new Exception("You don't have permission to delete this material.");
+                    }
+                }
+
+                $stmt = $pdo->prepare("DELETE FROM materials WHERE id = ?");
+                $stmt->execute([$_POST['material_id']]);
+                $_SESSION['success'] = "Material deleted successfully.";
+                break;
         }
 
         $pdo->commit();
@@ -119,21 +159,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['error'] = $e->getMessage();
     }
 
-    // Change redirect to just refresh the current page
     header('Location: ' . $_SERVER['PHP_SELF']);
     exit;
 }
-// Fetch all materials with class names
-$stmt = $pdo->query("
-    SELECT m.*, c.name as class_name 
-    FROM materials m 
-    JOIN classes c ON m.class_id = c.id 
-    ORDER BY m.created_at DESC
-");
+
+// Fetch materials based on role
+if ($isTeacher) {
+    // Teachers can only see their own materials
+    $stmt = $pdo->prepare("
+        SELECT m.*, c.name as class_name, u.name as added_by_name 
+        FROM materials m 
+        JOIN classes c ON m.class_id = c.id 
+        LEFT JOIN users u ON m.added_by = u.id
+        WHERE m.added_by = ?
+        ORDER BY m.created_at DESC
+    ");
+    $stmt->execute([$_SESSION['user_id']]);
+} else {
+    // Admins can see all materials
+    $stmt = $pdo->query("
+        SELECT m.*, c.name as class_name, u.name as added_by_name 
+        FROM materials m 
+        JOIN classes c ON m.class_id = c.id 
+        LEFT JOIN users u ON m.added_by = u.id
+        ORDER BY m.created_at DESC
+    ");
+}
 $materials = $stmt->fetchAll();
 
-// Fetch all classes for the dropdown
-$stmt = $pdo->query("SELECT id, name FROM classes ORDER BY name");
+// Fetch available classes based on role
+if ($isTeacher) {
+    $stmt = $pdo->prepare("
+        SELECT c.* 
+        FROM classes c
+        JOIN teacher_classes tc ON c.id = tc.class_id
+        WHERE tc.teacher_id = ?
+        ORDER BY c.name
+    ");
+    $stmt->execute([$_SESSION['user_id']]);
+} else {
+    $stmt = $pdo->query("SELECT id, name FROM classes ORDER BY name");
+}
 $classes = $stmt->fetchAll();
 ?>
 
@@ -142,11 +208,10 @@ $classes = $stmt->fetchAll();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= APP_NAME ?> - Materials Management</title>
+    <title><?= $isTeacher ? 'My Materials' : 'Materials Management' ?> - <?= APP_NAME ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50">
-    <!-- Navigation -->
     <?php include_once 'admin-header.php';?>
 
     <!-- Main Content -->
@@ -168,7 +233,9 @@ $classes = $stmt->fetchAll();
 
         <!-- Header -->
         <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-gray-900">Materials Management</h2>
+            <h2 class="text-2xl font-bold text-gray-900">
+                <?= $isTeacher ? 'My Materials' : 'Materials Management' ?>
+            </h2>
             <button onclick="openAddModal()" 
                     class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
                 Add New Material
@@ -184,6 +251,9 @@ $classes = $stmt->fetchAll();
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Content</th>
+                        <?php if (!$isTeacher): ?>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Added By</th>
+                        <?php endif; ?>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
@@ -207,13 +277,18 @@ $classes = $stmt->fetchAll();
                                     View <?= ucfirst($material['type']) ?>
                                 </a>
                             <?php else: ?>
-                                <a href="<?= APP_URL ?>/uploads/materials/<?= htmlspecialchars($material['content']) ?>" 
+                                <a href="<?= htmlspecialchars($material['content']) ?>" 
                                    target="_blank"
                                    class="text-indigo-600 hover:text-indigo-900">
                                     View File
                                 </a>
                             <?php endif; ?>
                         </td>
+                        <?php if (!$isTeacher): ?>
+                        <td class="px-6 py-4 text-sm text-gray-500">
+                            <?= htmlspecialchars($material['added_by_name'] ?? 'Unknown') ?>
+                        </td>
+                        <?php endif; ?>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <button onclick='openEditModal(<?= json_encode($material) ?>)'
                                     class="text-indigo-600 hover:text-indigo-900">Edit</button>
@@ -252,7 +327,7 @@ $classes = $stmt->fetchAll();
                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     </div>
                     <div>
-                    <label class="block text-sm font-medium text-gray-700">Material Type</label>
+                        <label class="block text-sm font-medium text-gray-700">Material Type</label>
                         <div class="mt-2 space-x-4">
                             <label class="inline-flex items-center">
                                 <input type="radio" name="materialType" value="link" checked
@@ -261,7 +336,7 @@ $classes = $stmt->fetchAll();
                                 <span class="ml-2">Link</span>
                             </label>
                             <label class="inline-flex items-center">
-                                <input type="radio" name="materialType" value="file"
+                            <input type="radio" name="materialType" value="file"
                                        onchange="toggleMaterialType(this.value)"
                                        class="form-radio text-indigo-600">
                                 <span class="ml-2">File Upload</span>
@@ -292,18 +367,6 @@ $classes = $stmt->fetchAll();
                         <p class="mt-1 text-sm text-gray-500">
                             Maximum file size: <?= MAX_FILE_SIZE / 1024 / 1024 ?>MB
                         </p>
-                        <div class="mt-2">
-                            <label class="inline-flex items-center">
-                                <input type="radio" name="type" value="pdf" checked
-                                       class="form-radio text-indigo-600">
-                                <span class="ml-2">PDF</span>
-                            </label>
-                            <label class="inline-flex items-center ml-4">
-                                <input type="radio" name="type" value="image"
-                                       class="form-radio text-indigo-600">
-                                <span class="ml-2">Image</span>
-                            </label>
-                        </div>
                     </div>
                     <div id="videoInput" class="hidden">
                         <label for="youtube_url" class="block text-sm font-medium text-gray-700">YouTube Video URL</label>
@@ -376,12 +439,12 @@ $classes = $stmt->fetchAll();
             document.getElementById('classId').value = material.class_id;
             document.getElementById('title').value = material.title;
 
-            document.querySelector(`input[name="materialType"][value="${material.type}"]`).checked = true;
-            toggleMaterialType(material.type);
+            document.querySelector(`input[name="materialType"][value="${material.type === 'youtubeLink' ? 'video' : material.type}"]`).checked = true;
+            toggleMaterialType(material.type === 'youtubeLink' ? 'video' : material.type);
             
             if (material.type === 'link') {
                 document.getElementById('content').value = material.content;
-            } else if (material.type === 'video') {
+            } else if (material.type === 'youtubeLink') {
                 document.getElementById('youtube_url').value = material.content;
             }
         }
@@ -404,37 +467,7 @@ $classes = $stmt->fetchAll();
             }
         }
 
-        // Form submission handler
-        document.getElementById('materialForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const materialType = document.querySelector('input[name="materialType"]:checked').value;
-            let isValid = true;
-            let errorMessage = '';
-
-            if (!document.getElementById('title').value.trim()) {
-                errorMessage = 'Please enter a title';
-                isValid = false;
-            } else if (materialType === 'link' && !document.getElementById('content').value.trim()) {
-                errorMessage = 'Please enter a URL';
-                isValid = false;
-            } else if (materialType === 'file' && !document.getElementById('file').files[0]) {
-                errorMessage = 'Please select a file';
-                isValid = false;
-            } else if (materialType === 'video' && !document.getElementById('youtube_url').value.trim()) {
-                errorMessage = 'Please enter a YouTube video URL';
-                isValid = false;
-            }
-
-            if (!isValid) {
-                alert(errorMessage);
-                return;
-            }
-
-            this.submit();
-        });
-
-        // Close modals when clicking outside
+        // Close modal when clicking outside
         window.onclick = function(event) {
             if (event.target === document.getElementById('materialModal')) {
                 closeModal();
@@ -445,6 +478,40 @@ $classes = $stmt->fetchAll();
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeModal();
+            }
+        });
+
+        // Form validation
+        document.getElementById('materialForm').addEventListener('submit', function(e) {
+            const title = document.getElementById('title').value.trim();
+            const materialType = document.querySelector('input[name="materialType"]:checked').value;
+            
+            if (!title) {
+                e.preventDefault();
+                alert('Please enter a title');
+                return;
+            }
+
+            switch (materialType) {
+                case 'link':
+                    if (!document.getElementById('content').value.trim()) {
+                        e.preventDefault();
+                        alert('Please enter a URL');
+                    }
+                    break;
+                case 'file':
+                    const formAction = document.getElementById('formAction').value;
+                    if (formAction === 'create' && !document.getElementById('file').files[0]) {
+                        e.preventDefault();
+                        alert('Please select a file');
+                    }
+                    break;
+                case 'video':
+                    if (!document.getElementById('youtube_url').value.trim()) {
+                        e.preventDefault();
+                        alert('Please enter a YouTube video URL');
+                    }
+                    break;
             }
         });
     </script>
