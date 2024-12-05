@@ -8,48 +8,91 @@ if (!is_admin()) {
     exit;
 }
 
-// Handle application approval/rejection
+// Handle application approval/rejection/deletion
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        $stmt = $pdo->prepare("
-            UPDATE teacher_profiles 
-            SET status = ?, approved_by = ?, approved_at = NOW() 
-            WHERE id = ?
-        ");
+        // Replace the existing deletion code block with this:
+if (isset($_POST['delete'])) {
+    try {
+        $pdo->beginTransaction();
         
-        $stmt->execute([
-            $_POST['action'],
-            $_SESSION['user_id'],
-            $_POST['application_id']
-        ]);
-
-        if ($_POST['action'] === 'approved') {
-            // Update user role to teacher
-            $stmt = $pdo->prepare("
-                UPDATE users 
-                SET role = 'teacher' 
-                WHERE id = (
-                    SELECT user_id 
-                    FROM teacher_profiles 
-                    WHERE id = ?
-                )
-            ");
-            $stmt->execute([$_POST['application_id']]);
+        // First get the user_id from teacher_profiles
+        $stmt = $pdo->prepare("SELECT user_id FROM teacher_profiles WHERE id = ?");
+        $stmt->execute([$_POST['application_id']]);
+        $user_id = $stmt->fetchColumn();
+        
+        // Delete from teacher_profiles
+        $stmt = $pdo->prepare("DELETE FROM teacher_profiles WHERE id = ?");
+        $stmt->execute([$_POST['application_id']]);
+        
+        // Delete from users
+        if ($user_id) {
+            $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
+            $stmt->execute([$user_id]);
         }
-
-        header('Location: teacher-applications.php?success=1');
+        
+        $pdo->commit();
+        header('Location: teacher-applications.php?success=1&message=Application and user account deleted successfully');
         exit;
+    } catch (PDOException $e) {
+        $pdo->rollBack();
+        error_log($e->getMessage());
+        $error = "An error occurred while deleting the application.";
+    }
+} else if (isset($_POST['action'])) {
+            // Handle status update
+            $stmt = $pdo->prepare("
+                UPDATE teacher_profiles 
+                SET status = ?, approved_by = ?, approved_at = NOW() 
+                WHERE id = ?
+            ");
+            
+            $stmt->execute([
+                $_POST['action'],
+                $_SESSION['user_id'],
+                $_POST['application_id']
+            ]);
+
+            if ($_POST['action'] === 'approved') {
+                // Update user role to teacher
+                $stmt = $pdo->prepare("
+                    UPDATE users 
+                    SET role = 'teacher' 
+                    WHERE id = (
+                        SELECT user_id 
+                        FROM teacher_profiles 
+                        WHERE id = ?
+                    )
+                ");
+                $stmt->execute([$_POST['application_id']]);
+            }
+
+            header('Location: teacher-applications.php?success=1&message=Status updated successfully');
+            exit;
+        }
     } catch (PDOException $e) {
         error_log($e->getMessage());
         $error = "An error occurred while processing the application.";
     }
 }
 
-// Fetch all applications
+// Fetch all applications with detailed information
 try {
     $stmt = $pdo->query("
-        SELECT tp.*, u.name, u.email, u.created_at as user_joined,
-               approver.name as approved_by_name
+        SELECT 
+            tp.*, 
+            u.name, 
+            u.email, 
+            u.created_at as user_joined,
+            u.phone,
+            approver.name as approved_by_name,
+            tp.address,
+            tp.city,
+            tp.state,
+            tp.postal_code,
+            tp.teaching_certifications,
+            tp.linkedin_profile,
+            tp.emergency_contact_phone
         FROM teacher_profiles tp
         JOIN users u ON tp.user_id = u.id
         LEFT JOIN users approver ON tp.approved_by = approver.id
@@ -79,7 +122,7 @@ try {
 
             <?php if (isset($_GET['success'])): ?>
                 <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
-                    <p class="text-green-700">Application status updated successfully!</p>
+                    <p class="text-green-700"><?= htmlspecialchars($_GET['message'] ?? 'Operation completed successfully!') ?></p>
                 </div>
             <?php endif; ?>
 
@@ -135,11 +178,28 @@ try {
                                                 Reject
                                             </button>
                                         </form>
+                                    <?php else: ?>
+                                        <form method="POST" class="inline-block">
+                                            <input type="hidden" name="application_id" value="<?= $app['id'] ?>">
+                                            <select name="action" onchange="this.form.submit()" 
+                                                    class="text-sm border-gray-300 rounded-md">
+                                                <option value="pending" <?= $app['status'] === 'pending' ? 'selected' : '' ?>>Pending</option>
+                                                <option value="approved" <?= $app['status'] === 'approved' ? 'selected' : '' ?>>Approved</option>
+                                                <option value="rejected" <?= $app['status'] === 'rejected' ? 'selected' : '' ?>>Rejected</option>
+                                            </select>
+                                        </form>
                                     <?php endif; ?>
-                                    <button onclick="viewDetails(<?= htmlspecialchars(json_encode($app)) ?>)"
+                                    <button onclick='viewDetails(<?= json_encode($app) ?>)'
                                             class="text-indigo-600 hover:text-indigo-900 ml-2">
                                         View Details
                                     </button>
+                                    <form method="POST" class="inline-block ml-2" onsubmit="return confirmDelete()">
+                                        <input type="hidden" name="application_id" value="<?= $app['id'] ?>">
+                                        <input type="hidden" name="delete" value="1">
+                                        <button type="submit" class="text-red-600 hover:text-red-900">
+                                            Delete
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -170,25 +230,52 @@ try {
             const modal = document.getElementById('detailsModal');
             const content = document.getElementById('modalContent');
             
+            const formatDate = (dateString) => {
+                return new Date(dateString).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            };
+            
             content.innerHTML = `
                 <div class="grid grid-cols-1 gap-4">
                     <div>
+                        <h4 class="text-sm font-medium text-gray-500">Contact Information</h4>
+                        <p class="mt-1">Phone: ${application.phone || 'N/A'}</p>
+                        <p>Emergency Contact: ${application.emergency_contact_phone || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500">Address</h4>
+                        <p class="mt-1">${application.address || 'N/A'}</p>
+                        <p>${application.city || ''} ${application.state || ''} ${application.postal_code || ''}</p>
+                    </div>
+                    <div>
                         <h4 class="text-sm font-medium text-gray-500">Qualifications</h4>
-                        <p class="mt-1">${application.qualification}</p>
+                        <p class="mt-1">${application.qualification || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500">Teaching Certifications</h4>
+                        <p class="mt-1">${application.teaching_certifications || 'N/A'}</p>
                     </div>
                     <div>
                         <h4 class="text-sm font-medium text-gray-500">Expertise</h4>
-                        <p class="mt-1">${application.expertise}</p>
+                        <p class="mt-1">${application.expertise || 'N/A'}</p>
                     </div>
                     <div>
                         <h4 class="text-sm font-medium text-gray-500">Bio</h4>
-                        <p class="mt-1">${application.bio}</p>
+                        <p class="mt-1">${application.bio || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500">LinkedIn Profile</h4>
+                        <p class="mt-1">${application.linkedin_profile ? `<a href="${application.linkedin_profile}" target="_blank" class="text-indigo-600 hover:text-indigo-900">View Profile</a>` : 'N/A'}</p>
                     </div>
                     <div>
                         <h4 class="text-sm font-medium text-gray-500">Application Status</h4>
                         <p class="mt-1">
                             ${application.status.charAt(0).toUpperCase() + application.status.slice(1)}
                             ${application.approved_by_name ? `(by ${application.approved_by_name})` : ''}
+                            on ${application.approved_at ? formatDate(application.approved_at) : 'N/A'}
                         </p>
                     </div>
                 </div>
@@ -201,32 +288,44 @@ try {
             document.getElementById('detailsModal').classList.add('hidden');
         }
 
+        function confirmDelete() {
+            return confirm('Are you sure you want to delete this application? This action cannot be undone.');
+        }
 
-       // Close modal on outside click
-       window.onclick = function(event) {
-                const modal = document.getElementById('detailsModal');
-                if (event.target === modal) {
-                    closeModal();
-                }
+        // Close modal on outside click
+        window.onclick = function(event) {
+            const modal = document.getElementById('detailsModal');
+            if (event.target === modal) {
+                closeModal();
             }
+        }
 
-            // Close modal on escape key
-            document.addEventListener('keydown', function(event) {
-                if (event.key === 'Escape') {
-                    closeModal();
+        // Close modal on escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Confirm before approving/rejecting
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                if (this.querySelector('input[name="delete"]')) {
+                    return; // Skip for delete forms as they have their own confirmation
+                }
+                
+                const action = this.querySelector('input[name="action"]')?.value;
+                if (!action) return; // Skip for forms without action
+                
+                const message = action === 'approved' 
+                    ? 'Are you sure you want to approve this teacher application?' 
+                    : 'Are you sure you want to reject this teacher application?';
+                
+                if (!confirm(message)) {
+                    e.preventDefault();
                 }
             });
-
-            // Confirm before approving/rejecting
-            document.querySelectorAll('form').forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    const action = this.querySelector('input[name="action"]').value;
-                    const message = action === 'approved' 
-                        ? 'Are you sure you want to approve this teacher application?' 
-                        : 'Are you sure you want to reject this teacher application?';
-                    
-                    if (!confirm(message)) {
-                        e.preventDefault();
-                    }
-                });
-            });
+        });
+    </script>
+</body>
+</html>
