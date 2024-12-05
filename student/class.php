@@ -116,7 +116,7 @@ foreach ($materials as $material) {
             max-width: 800px;
             margin: 0 auto;
             border-radius: 8px;
-            overflow: hidden; */
+            overflow: hidden; 
             -webkit-user-select: none;
              -moz-user-select: none;
             -ms-user-select: none;

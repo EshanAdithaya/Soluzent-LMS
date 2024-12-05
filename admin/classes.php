@@ -1,7 +1,12 @@
 <?php
 require_once '../asset/php/config.php';
 require_once '../asset/php/db.php';
-
+session_start();
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+    header('Location: ../login.php');
+    exit;
+}
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
