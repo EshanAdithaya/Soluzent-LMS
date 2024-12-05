@@ -65,6 +65,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
 
+
+    if (isset($_GET['invite'])) {
+        $stmt = $pdo->prepare("
+            SELECT t.name as teacher_name, til.* 
+            FROM teacher_invite_links til
+            JOIN users t ON til.teacher_id = t.id
+            WHERE til.invite_code = ? 
+            AND til.expires_at > NOW()
+            AND til.used_by IS NULL
+        ");
+        $stmt->execute([$_GET['invite']]);
+        $invite = $stmt->fetch();
+    
+        if ($invite) {
+            // Store invite data in session for use after signup
+            $_SESSION['teacher_invite'] = [
+                'code' => $_GET['invite'],
+                'teacher_id' => $invite['teacher_id']
+            ];
+        }
+    }
+    
+    // After successful user creation, add:
+    if (isset($_SESSION['teacher_invite'])) {
+        $stmt = $pdo->prepare("
+            UPDATE teacher_invite_links 
+            SET used_by = ? 
+            WHERE invite_code = ?
+        ");
+        $stmt->execute([$userId, $_SESSION['teacher_invite']['code']]);
+        
+        $stmt = $pdo->prepare("
+            INSERT INTO teacher_students (teacher_id, student_id, status) 
+            VALUES (?, ?, 'accepted')
+        ");
+        $stmt->execute([$_SESSION['teacher_invite']['teacher_id'], $userId]);
+        
+        unset($_SESSION['teacher_invite']);
+    }
+    
     // Validate inputs
     if (empty($name) || empty($email) || empty($phone) || empty($password)) {
         $response['message'] = 'Please fill in all fields';

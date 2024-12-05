@@ -152,3 +152,43 @@ ADD CONSTRAINT fk_enrollments_class
 FOREIGN KEY (class_id) 
 REFERENCES classes(id) 
 ON DELETE CASCADE;
+
+
+
+--another update for tacher student relationship
+
+-- Create table for teacher-student connections
+CREATE TABLE teacher_students (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    teacher_id INT NOT NULL,
+    student_id INT NOT NULL,
+    status ENUM('pending', 'accepted', 'rejected') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (teacher_id) REFERENCES users(id),
+    FOREIGN KEY (student_id) REFERENCES users(id),
+    UNIQUE KEY unique_teacher_student (teacher_id, student_id)
+);
+
+-- Modify enrollments table
+ALTER TABLE enrollments 
+ADD COLUMN teacher_id INT NOT NULL,
+ADD FOREIGN KEY (teacher_id) REFERENCES users(id);
+
+--teacher invite
+-- Add table for teacher invite links
+CREATE TABLE teacher_invite_links (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    teacher_id INT NOT NULL,
+    invite_code VARCHAR(32) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    used_by INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (teacher_id) REFERENCES users(id),
+    FOREIGN KEY (used_by) REFERENCES users(id),
+    UNIQUE KEY unique_invite_code (invite_code)
+);
+
+--update to student invite link 
+-- Add status column to track link usability
+ALTER TABLE teacher_invite_links
+ADD COLUMN status ENUM('active', 'inactive') DEFAULT 'active';

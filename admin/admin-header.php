@@ -43,9 +43,12 @@ include_once 'adminSession.php';
                         $admin_prefix . 'materials.php' => 'Materials',
                     ];
                     
-                    // Only show Teacher Applications link if user is not an admin
+                    // Only show Teacher Applications link if user is not a teacher
                     if ($_SESSION['role'] !== 'teacher') {
                         $nav_items[$admin_prefix . 'teacher-applications.php'] = 'Teacher_Applications';
+                    } else {
+                        // Add Teacher Students link for teachers
+                        $nav_items[$admin_prefix . 'teacher-students.php'] = 'Teacher Students';
                     }
                     
                     $nav_items[($is_profile_page ? '' : '../') . 'student/Dashboard.php'] = 'Student Dashboard';

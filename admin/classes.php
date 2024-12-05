@@ -11,13 +11,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         case 'create':
             try {
                 $pdo->beginTransaction();
-                
-                // Insert into classes table
                 $stmt = $pdo->prepare("INSERT INTO classes (name, description, created_by) VALUES (?, ?, ?)");
                 $stmt->execute([$_POST['name'], $_POST['description'], $_SESSION['user_id']]);
                 $classId = $pdo->lastInsertId();
                 
-                // Insert into teacher_classes table
                 $stmt = $pdo->prepare("INSERT INTO teacher_classes (teacher_id, class_id, is_owner, can_modify) VALUES (?, ?, true, true)");
                 $stmt->execute([$_SESSION['user_id'], $classId]);
                 
@@ -32,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             }
             break;
-            
+
         case 'update':
             $stmt = $pdo->prepare("UPDATE classes SET name = ?, description = ? WHERE id = ?");
             $stmt->execute([$_POST['name'], $_POST['description'], $_POST['class_id']]);
@@ -40,31 +37,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
             break;
 
-            case 'delete':
-                try {
-                    $pdo->beginTransaction();
-                    
-                    // The materials and enrollments will be automatically deleted 
-                    // due to ON DELETE CASCADE
-                    $stmt = $pdo->prepare("DELETE FROM classes WHERE id = ?");
-                    $stmt->execute([$_POST['class_id']]);
-                    
-                    $pdo->commit();
-                    $_SESSION['success'] = "Class and all associated materials deleted successfully.";
-                } catch (PDOException $e) {
-                    $pdo->rollBack();
-                    error_log($e->getMessage());
-                    $_SESSION['error'] = "An error occurred while deleting the class.";
-                }
-                header('Location: classes.php');
-                exit;
-                break;
+        case 'delete':
+            try {
+                $pdo->beginTransaction();
+                $stmt = $pdo->prepare("DELETE FROM classes WHERE id = ?");
+                $stmt->execute([$_POST['class_id']]);
+                $pdo->commit();
+                $_SESSION['success'] = "Class deleted successfully.";
+            } catch (PDOException $e) {
+                $pdo->rollBack();
+                error_log($e->getMessage());
+                $_SESSION['error'] = "Error deleting class.";
+            }
+            header('Location: classes.php');
+            exit;
+            break;
 
         case 'enroll':
             if (isset($_POST['students']) && is_array($_POST['students'])) {
-                $stmt = $pdo->prepare("INSERT IGNORE INTO enrollments (student_id, class_id) VALUES (?, ?)");
-                foreach ($_POST['students'] as $studentId) {
-                    $stmt->execute([$studentId, $_POST['class_id']]);
+                try {
+                    $pdo->beginTransaction();
+                    $stmt = $pdo->prepare("
+                        INSERT IGNORE INTO enrollments (student_id, class_id, teacher_id) 
+                        SELECT ?, ?, ? 
+                        FROM teacher_students 
+                        WHERE teacher_id = ? AND student_id = ? AND status = 'accepted'
+                    ");
+                    
+                    foreach ($_POST['students'] as $studentId) {
+                        $stmt->execute([
+                            $studentId, 
+                            $_POST['class_id'],
+                            $_SESSION['user_id'],
+                            $_SESSION['user_id'],
+                            $studentId
+                        ]);
+                    }
+                    $pdo->commit();
+                } catch (PDOException $e) {
+                    $pdo->rollBack();
+                    error_log($e->getMessage());
                 }
             }
             header('Location: classes.php');
@@ -72,8 +84,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             break;
 
         case 'unenroll':
-            $stmt = $pdo->prepare("DELETE FROM enrollments WHERE student_id = ? AND class_id = ?");
-            $stmt->execute([$_POST['student_id'], $_POST['class_id']]);
+            $stmt = $pdo->prepare("DELETE FROM enrollments WHERE student_id = ? AND class_id = ? AND teacher_id = ?");
+            $stmt->execute([$_POST['student_id'], $_POST['class_id'], $_SESSION['user_id']]);
             echo json_encode(['success' => true]);
             exit;
             break;
@@ -83,35 +95,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Handle AJAX requests for viewing enrolled students
 if (isset($_GET['action']) && $_GET['action'] === 'get_enrolled_students') {
     $classId = $_GET['class_id'];
-    $stmt = $pdo->prepare("
-        SELECT u.id, u.name, u.email 
-        FROM users u 
-        JOIN enrollments e ON u.id = e.student_id 
-        WHERE e.class_id = ?
-    ");
-    $stmt->execute([$classId]);
+    if ($_SESSION['role'] === 'teacher') {
+        $stmt = $pdo->prepare("
+            SELECT u.id, u.name, u.email, u.phone, u.last_access 
+            FROM users u 
+            JOIN enrollments e ON u.id = e.student_id 
+            WHERE e.class_id = ? AND e.teacher_id = ?
+        ");
+        $stmt->execute([$classId, $_SESSION['user_id']]);
+    } else {
+        $stmt = $pdo->prepare("
+            SELECT u.id, u.name, u.email, u.phone, u.last_access,
+                   t.name as teacher_name
+            FROM users u 
+            JOIN enrollments e ON u.id = e.student_id 
+            JOIN users t ON e.teacher_id = t.id
+            WHERE e.class_id = ?
+        ");
+        $stmt->execute([$classId]);
+    }
     $students = $stmt->fetchAll();
     echo json_encode(['success' => true, 'students' => $students]);
     exit;
 }
 
-// Fetch all classes with student count
+// Fetch classes based on role
 if ($_SESSION['role'] === 'teacher') {
     $stmt = $pdo->prepare("
-        SELECT c.*, COUNT(e.student_id) as student_count 
+        SELECT c.*, COUNT(DISTINCT e.student_id) as student_count 
         FROM classes c 
-        LEFT JOIN enrollments e ON c.id = e.class_id 
+        LEFT JOIN enrollments e ON c.id = e.class_id AND e.teacher_id = ?
         JOIN teacher_classes tc ON c.id = tc.class_id 
         WHERE tc.teacher_id = ?
         GROUP BY c.id 
         ORDER BY c.name
     ");
-    $stmt->execute([$_SESSION['user_id']]);
+    $stmt->execute([$_SESSION['user_id'], $_SESSION['user_id']]);
     $classes = $stmt->fetchAll();
+
+    // Fetch only connected students
+    $stmt = $pdo->prepare("
+        SELECT u.id, u.name, u.email 
+        FROM users u 
+        JOIN teacher_students ts ON u.id = ts.student_id
+        WHERE ts.teacher_id = ? AND ts.status = 'accepted'
+        ORDER BY u.name
+    ");
+    $stmt->execute([$_SESSION['user_id']]);
 } else {
-    // Admin sees all classes with creator info
     $stmt = $pdo->query("
-        SELECT c.*, COUNT(e.student_id) as student_count,
+        SELECT c.*, COUNT(DISTINCT e.student_id) as student_count,
                u.name as creator_name, u.email as creator_email 
         FROM classes c 
         LEFT JOIN enrollments e ON c.id = e.class_id 
@@ -120,9 +153,10 @@ if ($_SESSION['role'] === 'teacher') {
         ORDER BY c.name
     ");
     $classes = $stmt->fetchAll();
+
+    $stmt = $pdo->query("SELECT id, name, email FROM users WHERE role = 'student' ORDER BY name");
 }
-
-
+$students = $stmt->fetchAll();
 ?>
 
 <!DOCTYPE html>
