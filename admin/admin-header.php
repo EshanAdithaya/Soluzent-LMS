@@ -1,6 +1,8 @@
 <?php
-
 $current_page = basename($_SERVER['PHP_SELF']);
+$is_profile_page = ($current_page === 'profile.php');
+$is_dashboard_page = ($current_page === 'dashboard.php');
+$admin_prefix = $is_profile_page ? 'admin/' : '';
 ?>
 
 <!DOCTYPE html>
@@ -19,7 +21,13 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <!-- Logo -->
                 <div class="flex">
                     <div class="flex-shrink-0 flex items-center">
-                        <h1 class="text-xl font-bold text-indigo-600">EduPortal Admin</h1>
+                        <?php if ($is_dashboard_page): ?>
+                            <h1 class="text-xl font-bold text-indigo-600">EduPortal Admin</h1>
+                        <?php else: ?>
+                            <a href="<?php echo $admin_prefix; ?>dashboard.php">
+                                <h1 class="text-xl font-bold text-indigo-600">EduPortal Admin</h1>
+                            </a>
+                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -27,11 +35,10 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <div class="hidden sm:flex sm:space-x-8 items-center">
                     <?php
                     $nav_items = [
-                        'dashboard.php' => 'Dashboard',
-                        'classes.php' => 'Classes',
-                        'students.php' => 'Students',
-                        'materials.php' => 'Materials',
-                        '../student/Dashboard.php' => 'Student Dashboard' // Added Student Dashboard link
+                        $admin_prefix . 'classes.php' => 'Classes',
+                        $admin_prefix . 'students.php' => 'Students',
+                        $admin_prefix . 'materials.php' => 'Materials',
+                        ($is_profile_page ? '' : '../') . 'student/Dashboard.php' => 'Student Dashboard'
                     ];
 
                     foreach ($nav_items as $page => $label) {
@@ -48,7 +55,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <div class="ml-3 relative">
                         <div class="flex items-center space-x-4">
                             <span id="adminName" class="text-gray-700"></span>
-                            <a href="../asset/php/logout.php"> <button class="text-gray-600 hover:text-gray-900">Logout</button> </a>
+                            <a href="<?php echo $is_profile_page ? '' : '../'; ?>profile.php" class="text-gray-600 hover:text-gray-900">My Profile</a>
+                            <a href="<?php echo $is_profile_page ? 'admin/' : ''; ?>../asset/php/logout.php"> <button class="text-gray-600 hover:text-gray-900">Logout</button> </a>
                         </div>
                     </div>
                 </div>
