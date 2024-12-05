@@ -69,7 +69,10 @@ try {
     <!-- Welcome Section -->
     <div class="px-4 py-5 sm:px-6">
         <h2 class="text-2xl font-bold text-gray-900">Admin Dashboard</h2>
-        <p class="mt-1 text-sm text-gray-600">Overview of platform statistics</p>
+        <div class="flex items-center justify-between">
+            <p class="mt-1 text-sm text-gray-600">Overview of platform statistics</p>
+            <p class="text-lg text-gray-700">Welcome, <span class="font-semibold"><?php echo htmlspecialchars($_SESSION['name'] ?? 'Admin'); ?></span></p>
+        </div>
     </div>
 
     <!-- Stats Cards -->

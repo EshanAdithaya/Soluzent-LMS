@@ -33,3 +33,6 @@
 [05-Dec-2024 03:40:44 UTC] User data loaded successfully
 [05-Dec-2024 03:43:34 UTC] User data loaded successfully
 [05-Dec-2024 03:43:55 UTC] User data loaded successfully
+[05-Dec-2024 03:55:29 UTC] PHP Deprecated:  Constant FILTER_SANITIZE_STRING is deprecated in C:\xampp\htdocs\nimru-Web\profile.php on line 42
+[05-Dec-2024 03:55:29 UTC] PHP Deprecated:  Constant FILTER_SANITIZE_STRING is deprecated in C:\xampp\htdocs\nimru-Web\profile.php on line 44
+[05-Dec-2024 03:56:04 UTC] Password changed for user ID: 1 at 2024-12-05 03:56:04
