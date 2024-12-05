@@ -12,8 +12,8 @@ define('DB_HOST', 'localhost');
 define('DB_NAME', 'soluzentlms');
 define('DB_USER', 'root');
 define('DB_PASS', '');
-define('DB_CHARSET', 'utf8mb4_general_ci');
-define('DB_PORT', 80);
+define('DB_CHARSET', 'utf8mb4');
+define('DB_PORT', 3306);
 
 // Application Settings
 define('APP_NAME', 'EduPortal');
