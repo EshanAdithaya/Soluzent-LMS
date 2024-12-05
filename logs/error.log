@@ -1,0 +1,19 @@
+[05-Dec-2024 19:12:19 UTC] PHP Warning:  Constant DB_HOST already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 11
+[05-Dec-2024 19:12:19 UTC] PHP Warning:  Constant DB_NAME already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 12
+[05-Dec-2024 19:12:19 UTC] PHP Warning:  Constant DB_USER already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 13
+[05-Dec-2024 19:12:19 UTC] PHP Warning:  Constant DB_PASS already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 14
+[05-Dec-2024 19:12:19 UTC] PHP Warning:  Constant DB_CHARSET already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 15
+[05-Dec-2024 19:12:19 UTC] PHP Warning:  Constant DB_PORT already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 16
+[05-Dec-2024 19:12:19 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\nimru-Web\signup.php on line 19
+[05-Dec-2024 19:12:20 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\nimru-Web\navbar.php on line 2
+[05-Dec-2024 19:12:53 UTC] PHP Warning:  Constant DB_HOST already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 11
+[05-Dec-2024 19:12:53 UTC] PHP Warning:  Constant DB_NAME already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 12
+[05-Dec-2024 19:12:53 UTC] PHP Warning:  Constant DB_USER already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 13
+[05-Dec-2024 19:12:53 UTC] PHP Warning:  Constant DB_PASS already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 14
+[05-Dec-2024 19:12:53 UTC] PHP Warning:  Constant DB_CHARSET already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 15
+[05-Dec-2024 19:12:53 UTC] PHP Warning:  Constant DB_PORT already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 16
+[05-Dec-2024 19:12:53 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\nimru-Web\signup.php on line 19
+[05-Dec-2024 19:12:54 UTC] PHP Deprecated:  Constant FILTER_SANITIZE_STRING is deprecated in C:\xampp\htdocs\nimru-Web\signup.php on line 62
+[05-Dec-2024 19:12:54 UTC] PHP Deprecated:  Constant FILTER_SANITIZE_STRING is deprecated in C:\xampp\htdocs\nimru-Web\signup.php on line 64
+[05-Dec-2024 19:13:12 UTC] User data loaded successfully
+[05-Dec-2024 19:13:57 UTC] User data loaded successfully
