@@ -41,9 +41,14 @@ include_once 'adminSession.php';
                         $admin_prefix . 'classes.php' => 'Classes',
                         $admin_prefix . 'students.php' => 'Students',
                         $admin_prefix . 'materials.php' => 'Materials',
-                        $admin_prefix . 'teacher-applications.php' => 'Teacher_Applications',
-                        ($is_profile_page ? '' : '../') . 'student/Dashboard.php' => 'Student Dashboard'
                     ];
+                    
+                    // Only show Teacher Applications link if user is not an admin
+                    if ($_SESSION['role'] !== 'teacher') {
+                        $nav_items[$admin_prefix . 'teacher-applications.php'] = 'Teacher_Applications';
+                    }
+                    
+                    $nav_items[($is_profile_page ? '' : '../') . 'student/Dashboard.php'] = 'Student Dashboard';
 
                     foreach ($nav_items as $page => $label) {
                         $active = ($current_page === basename($page)) ? 

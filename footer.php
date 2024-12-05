@@ -34,8 +34,8 @@
                 </div>
             </div>
             <div class="mt-8 pt-8 border-t border-gray-700 text-center">
-    <p class="text-gray-300">&copy; 2024 SOLUZENT Technology. All rights reserved. Design and developed by Sri Lankan &#x1F1F1;&#x1F1F0;</p>
-</div>
+                <p class="text-gray-300">&copy; 2024 SOLUZENT Technology. All rights reserved. Design and developed by Sri Lankan 🇱🇰</p>
+            </div>
         </div>
     </footer>
     
