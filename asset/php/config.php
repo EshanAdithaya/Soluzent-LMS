@@ -8,12 +8,12 @@ ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/error.log');
 
 // Database Configuration
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'soluzentlms');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_HOST', 'db-mysql-nyc3-14016-do-user-17700770-0.d.db.ondigitalocean.com');
+define('DB_NAME', 'defaultdb');
+define('DB_USER', 'doadmin');
+define('DB_PASS', 'AVNS_l3SW8eljPIvmmGNUCFK');
 define('DB_CHARSET', 'utf8mb4');
-define('DB_PORT', 3306);
+define('DB_PORT', 25060);
 
 // Application Settings
 define('APP_NAME', 'EduPortal');
