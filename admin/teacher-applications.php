@@ -2,11 +2,6 @@
 require_once '../asset/php/config.php';
 require_once '../asset/php/db.php';
 
-// Check if user is admin
-if (!is_admin()) {
-    header('Location: /login.php');
-    exit;
-}
 
 // Handle application approval/rejection/deletion
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

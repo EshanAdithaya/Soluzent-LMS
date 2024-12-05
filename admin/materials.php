@@ -1,15 +1,6 @@
 <?php
 require_once __DIR__ . '/../asset/php/config.php';
 session_start();
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-    header('Location: ../login.php');
-    exit;
-}
-// Check admin authentication
-if (!is_admin()) {
-    redirect('login.php');
-}
 
 // Handle file uploads
 function handleFileUpload($file) {

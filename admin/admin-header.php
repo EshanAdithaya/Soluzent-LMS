@@ -3,6 +3,9 @@ $current_page = basename($_SERVER['PHP_SELF']);
 $is_profile_page = ($current_page === 'profile.php');
 $is_dashboard_page = ($current_page === 'dashboard.php');
 $admin_prefix = $is_profile_page ? 'admin/' : '';
+$portal_title = isset($_SESSION['role']) && $_SESSION['role'] === 'teacher' ? 'EduPortal Teacher' : 'EduPortal Admin';
+
+include_once 'adminSession.php';
 ?>
 
 <!DOCTYPE html>
@@ -22,10 +25,10 @@ $admin_prefix = $is_profile_page ? 'admin/' : '';
                 <div class="flex">
                     <div class="flex-shrink-0 flex items-center">
                         <?php if ($is_dashboard_page): ?>
-                            <h1 class="text-xl font-bold text-indigo-600">EduPortal Admin</h1>
+                            <h1 class="text-xl font-bold text-indigo-600"><?php echo $portal_title; ?></h1>
                         <?php else: ?>
                             <a href="<?php echo $admin_prefix; ?>dashboard.php">
-                                <h1 class="text-xl font-bold text-indigo-600">EduPortal Admin</h1>
+                                <h1 class="text-xl font-bold text-indigo-600"><?php echo $portal_title; ?></h1>
                             </a>
                         <?php endif; ?>
                     </div>

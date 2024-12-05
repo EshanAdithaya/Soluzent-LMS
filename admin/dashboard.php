@@ -4,11 +4,7 @@ require_once __DIR__ . '/../asset/php/config.php';
 require_once __DIR__ . '/../asset/php/db.php';
 session_start();
 
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-    header('Location: ../login.php');
-    exit;
-}
+
 
 try {
     // Prepare statements for secure data fetching
