@@ -151,24 +151,7 @@ $classes = $stmt->fetchAll();
 </head>
 <body class="bg-gray-50">
     <!-- Navigation -->
-    <nav class="bg-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="flex justify-between h-16">
-                <div class="flex">
-                    <div class="flex-shrink-0 flex items-center">
-                        <h1 class="text-xl font-bold text-indigo-600"><?= APP_NAME ?> Admin</h1>
-                    </div>
-                </div>
-                <div class="flex items-center space-x-8">
-                    <a href="dashboard.php" class="text-gray-500 hover:text-gray-700">Dashboard</a>
-                    <a href="classes.php" class="text-gray-500 hover:text-gray-700">Classes</a>
-                    <a href="students.php" class="text-gray-500 hover:text-gray-700">Students</a>
-                    <a href="materials.php" class="text-gray-900 border-b-2 border-indigo-500">Materials</a>
-                    <a href="../logout.php" class="text-gray-500 hover:text-gray-700">Logout</a>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <?php include_once 'admin-header.php';?>
 
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">

@@ -121,6 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up - Education Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="<?php echo htmlspecialchars($baseUrl ?? ''); ?>asset/js/devtools-prevention.js"></script>
 </head>
 <body class="bg-gray-50">
     <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">

@@ -104,6 +104,8 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Education Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="<?php echo htmlspecialchars($baseUrl ?? ''); ?>asset/js/devtools-prevention.js"></script>
+
 </head>
 <body class="bg-gray-50">
     <div class="min-h-screen flex items-center justify-center">

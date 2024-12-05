@@ -38,6 +38,7 @@
             </div>
         </div>
     </footer>
+    <script src="<?php echo htmlspecialchars($baseUrl ?? ''); ?>asset/js/devtools-prevention.js"></script>
 
     <script>
         // Mobile menu toggle

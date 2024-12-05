@@ -84,9 +84,9 @@ foreach ($materials as $material) {
             max-width: 800px;
             margin: 0 auto;
             border-radius: 8px;
-            overflow: hidden;
+            overflow: hidden; */
             -webkit-user-select: none;
-            -moz-user-select: none;
+             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
         }
@@ -104,26 +104,7 @@ foreach ($materials as $material) {
     </style>
 </head>
 <body class="bg-gray-50">
-    <!-- Navigation -->
-    <nav class="bg-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="flex justify-between h-16">
-                <div class="flex">
-                    <div class="flex-shrink-0 flex items-center">
-                        <h1 class="text-xl font-bold text-indigo-600">EduPortal</h1>
-                    </div>
-                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-                        <a href="dashboard.php" class="text-gray-500 hover:text-gray-700 px-3 py-2">Dashboard</a>
-                        <a href="classes.php" class="border-b-2 border-indigo-500 text-gray-900 px-3 py-2">My Classes</a>
-                        <a href="profile.php" class="text-gray-500 hover:text-gray-700 px-3 py-2">Profile</a>
-                    </div>
-                </div>
-                <div class="flex items-center">
-                    <button id="logoutBtn" class="text-gray-500 hover:text-gray-700">Logout</button>
-                </div>
-            </div>
-        </div>
-    </nav>
+<?php include_once 'student-header.php';?>
 
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">

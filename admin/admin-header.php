@@ -18,6 +18,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - EduPortal</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="<?php echo htmlspecialchars($baseUrl ?? ''); ?>../asset/js/devtools-prevention.js"></script>
 </head>
 <body class="bg-gray-50">
     <nav class="bg-white shadow-lg">
