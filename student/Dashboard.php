@@ -21,10 +21,7 @@ if (!file_exists($logDir)) {
 }
 ini_set('error_log', $logDir . '/error.log');
 
-if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'student')) {
-    echo '<script>alert("Please login to access the dashboard."); window.location.href = "../login.php";</script>';
-    exit;
-}
+
 // User ID from session
 $userId = $_SESSION['user_id'];
 

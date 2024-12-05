@@ -1,4 +1,5 @@
 <script src="<?php echo htmlspecialchars($baseUrl ?? ''); ?>../asset/js/devtools-prevention.js"></script>
+<?php include_once 'session.php'; ?>
 <!-- Navigation -->
 <nav class="bg-white shadow">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
