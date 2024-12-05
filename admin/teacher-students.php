@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$_SESSION['user_id'], $inviteCode, $expiryDate]);
                 
                 $pdo->commit();
-                $_SESSION['invite_link'] = $baseUrl . "register-invite.php?invite=" . $inviteCode;
+                $_SESSION['invite_link'] = "https://plankton-app-us3aj.ondigitalocean.app/register-invite.php?invite=" . $inviteCode;
                 $_SESSION['success'] = "New invite link generated successfully";
             } catch (Exception $e) {
                 $pdo->rollBack();
@@ -191,7 +191,7 @@ $classes = $stmt->fetchAll();
                 <div class="p-3 bg-green-50 border border-green-200 rounded">
                     <div class="flex items-center justify-between">
                         <input type="text" 
-                               value="<?= $baseUrl ?>register-invite.php?invite=<?= htmlspecialchars($activeInvite['invite_code']) ?>" 
+                               value="https://plankton-app-us3aj.ondigitalocean.app/register-invite.php?invite=<?= htmlspecialchars($activeInvite['invite_code']) ?>" 
                                readonly
                                class="block w-full px-2 py-1 text-sm border border-gray-300 rounded bg-white">
                         <button onclick="copyLink(this)" 
