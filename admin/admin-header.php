@@ -50,13 +50,22 @@ $admin_prefix = $is_profile_page ? 'admin/' : '';
                     ?>
                 </div>
 
-                <!-- Profile Dropdown -->
+                <!-- Profile Actions -->
                 <div class="flex items-center">
                     <div class="ml-3 relative">
-                        <div class="flex items-center space-x-4">
-                            <span id="adminName" class="text-gray-700"></span>
-                            <a href="<?php echo $is_profile_page ? '' : '../'; ?>profile.php" class="text-gray-600 hover:text-gray-900">My Profile</a>
-                            <a href="<?php echo $is_profile_page ? 'admin/' : ''; ?>../asset/php/logout.php"> <button class="text-gray-600 hover:text-gray-900">Logout</button> </a>
+                        <div class="flex items-center space-x-6">
+                            <a href="<?php echo $is_profile_page ? '' : '../'; ?>profile.php" class="text-gray-600 hover:text-gray-900 relative group">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                <span class="absolute hidden group-hover:block -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded">Profile</span>
+                            </a>
+                            <a href="<?php echo $is_profile_page ? 'admin/' : ''; ?>../asset/php/logout.php" class="text-gray-600 hover:text-gray-900 relative group">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                                <span class="absolute hidden group-hover:block -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded">Logout</span>
+                            </a>
                         </div>
                     </div>
                 </div>
