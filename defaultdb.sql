@@ -58,7 +58,7 @@ CREATE TABLE `reset_tokens` (
   CONSTRAINT `reset_tokens_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
 );
 
-
+--new updates comes from here 
 -- Teacher role modifications
 ALTER TABLE `users` 
 MODIFY COLUMN `role` ENUM('admin', 'teacher', 'student') NOT NULL DEFAULT 'student';
