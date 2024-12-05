@@ -9,12 +9,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     switch ($action) {
         case 'create':
-            $stmt = $pdo->prepare("INSERT INTO classes (name, description) VALUES (?, ?)");
-            $stmt->execute([$_POST['name'], $_POST['description']]);
-            header('Location: classes.php');
-            exit;
+            try {
+                $pdo->beginTransaction();
+                
+                // Insert into classes table
+                $stmt = $pdo->prepare("INSERT INTO classes (name, description, created_by) VALUES (?, ?, ?)");
+                $stmt->execute([$_POST['name'], $_POST['description'], $_SESSION['user_id']]);
+                $classId = $pdo->lastInsertId();
+                
+                // Insert into teacher_classes table
+                $stmt = $pdo->prepare("INSERT INTO teacher_classes (teacher_id, class_id, is_owner, can_modify) VALUES (?, ?, true, true)");
+                $stmt->execute([$_SESSION['user_id'], $classId]);
+                
+                $pdo->commit();
+                header('Location: classes.php');
+                exit;
+            } catch (PDOException $e) {
+                $pdo->rollBack();
+                error_log($e->getMessage());
+                $_SESSION['error'] = "Error creating class";
+                header('Location: classes.php');
+                exit;
+            }
             break;
-
+            
         case 'update':
             $stmt = $pdo->prepare("UPDATE classes SET name = ?, description = ? WHERE id = ?");
             $stmt->execute([$_POST['name'], $_POST['description'], $_POST['class_id']]);
@@ -78,18 +96,33 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_enrolled_students') {
 }
 
 // Fetch all classes with student count
-$stmt = $pdo->query("
-    SELECT c.*, COUNT(e.student_id) as student_count 
-    FROM classes c 
-    LEFT JOIN enrollments e ON c.id = e.class_id 
-    GROUP BY c.id 
-    ORDER BY c.name
-");
-$classes = $stmt->fetchAll();
+if ($_SESSION['role'] === 'teacher') {
+    $stmt = $pdo->prepare("
+        SELECT c.*, COUNT(e.student_id) as student_count 
+        FROM classes c 
+        LEFT JOIN enrollments e ON c.id = e.class_id 
+        JOIN teacher_classes tc ON c.id = tc.class_id 
+        WHERE tc.teacher_id = ?
+        GROUP BY c.id 
+        ORDER BY c.name
+    ");
+    $stmt->execute([$_SESSION['user_id']]);
+    $classes = $stmt->fetchAll();
+} else {
+    // Admin sees all classes with creator info
+    $stmt = $pdo->query("
+        SELECT c.*, COUNT(e.student_id) as student_count,
+               u.name as creator_name, u.email as creator_email 
+        FROM classes c 
+        LEFT JOIN enrollments e ON c.id = e.class_id 
+        LEFT JOIN users u ON c.created_by = u.id
+        GROUP BY c.id 
+        ORDER BY c.name
+    ");
+    $classes = $stmt->fetchAll();
+}
 
-// Fetch all students for enrollment
-$stmt = $pdo->query("SELECT id, name, email FROM users WHERE role = 'student' ORDER BY name");
-$students = $stmt->fetchAll();
+
 ?>
 
 <!DOCTYPE html>
@@ -120,6 +153,9 @@ $students = $stmt->fetchAll();
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <?php if ($_SESSION['role'] !== 'teacher'): ?>Created By<?php endif; ?>
+                        </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Students</th>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -130,6 +166,12 @@ $students = $stmt->fetchAll();
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             <?= htmlspecialchars($class['name']) ?>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">
+                            <?php if ($_SESSION['role'] !== 'teacher'): ?>
+                                <?= htmlspecialchars($class['creator_name']) ?> 
+                                (<?= htmlspecialchars($class['creator_email']) ?>)
+                            <?php endif; ?>
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-500">
                             <?= htmlspecialchars($class['description']) ?>

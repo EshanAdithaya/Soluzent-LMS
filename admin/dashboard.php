@@ -3,7 +3,7 @@
 require_once __DIR__ . '/../asset/php/config.php';
 require_once __DIR__ . '/../asset/php/db.php';
 session_start();
-
+$title = isset($_SESSION['role']) && $_SESSION['role'] === 'teacher' ? 'Teacher Dashboard' : 'Admin Dashboard';
 
 
 try {
@@ -68,7 +68,15 @@ try {
 <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
     <!-- Welcome Section -->
     <div class="px-4 py-5 sm:px-6">
-        <h2 class="text-2xl font-bold text-gray-900">Admin Dashboard</h2>
+    <?php if ($is_dashboard_page): ?>
+        <h2 class="text-2xl font-bold text-gray-900"><?php echo $title; ?></h2>
+                        <?php else: ?>
+                            <a href="<?php echo $admin_prefix; ?>dashboard.php">
+                            <h2 class="text-2xl font-bold text-gray-900"><?php echo $title; ?></h2>
+                            </a>
+                        <?php endif; ?>
+
+        <!-- <h2 class="text-2xl font-bold text-gray-900">Admin Dashboard</h2> -->
         <div class="flex items-center justify-between">
             <p class="mt-1 text-sm text-gray-600">Overview of platform statistics</p>
             <p class="text-lg text-gray-700">Welcome, <span class="font-semibold"><?php echo htmlspecialchars($_SESSION['name'] ?? 'Admin'); ?></span></p>
