@@ -96,3 +96,57 @@ INSERT INTO `users` (`id`, `name`, `email`, `phone`, `password`, `role`, `create
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+
+-- Modify users table to include teacher role
+ALTER TABLE users 
+MODIFY COLUMN role ENUM('admin', 'teacher', 'student') NOT NULL DEFAULT 'student';
+
+-- Create teacher profiles table for additional teacher information
+CREATE TABLE teacher_profiles (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    qualification TEXT,
+    bio TEXT,
+    expertise VARCHAR(255),
+    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+    approved_at TIMESTAMP NULL,
+    approved_by INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Create teacher_classes junction table
+CREATE TABLE teacher_classes (
+    teacher_id INT NOT NULL,
+    class_id INT NOT NULL,
+    is_owner BOOLEAN DEFAULT FALSE,
+    can_modify BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (teacher_id, class_id),
+    FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
+);
+
+-- Add indexes for better performance
+CREATE INDEX idx_teacher_status ON teacher_profiles(status);
+CREATE INDEX idx_teacher_approval ON teacher_profiles(approved_at);
+CREATE INDEX idx_class_ownership ON teacher_classes(is_owner);
+
+-- Add constraints to materials table to track which teacher added the material
+ALTER TABLE materials
+ADD COLUMN added_by INT,
+ADD FOREIGN KEY (added_by) REFERENCES users(id) ON DELETE SET NULL;
+
+-- Migrate existing classes to have proper ownership
+-- This assumes the admin created all existing classes
+INSERT INTO teacher_classes (teacher_id, class_id, is_owner, can_modify)
+SELECT COALESCE(created_by, 1), id, TRUE, TRUE
+FROM classes;
+
+-- Update existing materials to set added_by to the class creator
+UPDATE materials m
+JOIN classes c ON m.class_id = c.id
+SET m.added_by = COALESCE(c.created_by, 1);
