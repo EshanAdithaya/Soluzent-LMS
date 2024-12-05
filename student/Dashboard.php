@@ -5,6 +5,7 @@ session_start([
     'cookie_secure' => true,
     'use_only_cookies' => true
 ]);
+// Check if user is logged in and is a student
 
 require_once __DIR__ . '/../asset/php/config.php';
 require_once __DIR__ . '/../asset/php/db.php';
@@ -20,12 +21,10 @@ if (!file_exists($logDir)) {
 }
 ini_set('error_log', $logDir . '/error.log');
 
-// Validate session and role
-if (!isset($_SESSION['user_id'], $_SESSION['role']) || $_SESSION['role'] !== 'student') {
-    header('Location: ../login.php');
+if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'student')) {
+    echo '<script>alert("Please login to access the dashboard."); window.location.href = "../login.php";</script>';
     exit;
 }
-
 // User ID from session
 $userId = $_SESSION['user_id'];
 

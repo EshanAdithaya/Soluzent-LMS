@@ -63,3 +63,15 @@
 [05-Dec-2024 04:19:21 UTC] User data loaded successfully
 [05-Dec-2024 04:20:04 UTC] User data loaded successfully
 [05-Dec-2024 04:20:15 UTC] User data loaded successfully
+[05-Dec-2024 11:04:05 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function getUserData() in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php:33
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\github\nimru-Web\student\Dashboard.php on line 33
+[05-Dec-2024 11:05:30 UTC] User data loaded successfully
+[05-Dec-2024 11:11:16 UTC] User data loaded successfully
+[05-Dec-2024 11:14:06 UTC] User data loaded successfully
+[05-Dec-2024 11:15:43 UTC] User data loaded successfully
+[05-Dec-2024 11:16:29 UTC] User data loaded successfully
+[05-Dec-2024 11:17:09 UTC] User data loaded successfully
+[05-Dec-2024 11:23:41 UTC] User data loaded successfully
+[05-Dec-2024 11:24:32 UTC] User data loaded successfully

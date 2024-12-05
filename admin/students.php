@@ -1,14 +1,14 @@
 <?php
-session_start();
 require_once '../asset/php/config.php';
 require_once '../asset/php/db.php';
 
-// Check admin authentication
-// if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-//     header('Location: ../login.php');
-//     exit;
-// }
+session_start();
 
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+    header('Location: ../login.php');
+    exit;
+}
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
