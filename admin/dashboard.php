@@ -8,68 +8,94 @@ $isTeacher = isset($_SESSION['role']) && $_SESSION['role'] === 'teacher';
 
 try {
     if ($isTeacher) {
-        // Teacher-specific queries
+        // Student count query
         $stmt = $pdo->prepare('
             SELECT COUNT(DISTINCT s.id) 
             FROM users s 
             JOIN teacher_students ts ON s.id = ts.student_id 
-            WHERE ts.teacher_id = :teacher_id AND ts.status = "accepted"
+            WHERE ts.teacher_id = :teacher_id AND ts.status = \'accepted\'
         ');
-        $stmt->execute(['teacher_id' => $_SESSION['user_id']]);
+        if (!$stmt->execute(['teacher_id' => $_SESSION['user_id']])) {
+            throw new Exception('Error executing student count query');
+        }
         $totalStudents = $stmt->fetchColumn();
-
+    
+        // Classes count
         $stmt = $pdo->prepare('
             SELECT COUNT(*) 
-            FROM teacher_classes tc
+            FROM classes c
+            JOIN teacher_classes tc ON c.id = tc.class_id
             WHERE tc.teacher_id = :teacher_id
         ');
-        $stmt->execute(['teacher_id' => $_SESSION['user_id']]);
+        if (!$stmt->execute(['teacher_id' => $_SESSION['user_id']])) {
+            throw new Exception('Error executing class count query');
+        }
         $activeClasses = $stmt->fetchColumn();
-
+    
+        // Materials count
         $stmt = $pdo->prepare('
             SELECT COUNT(*) 
             FROM materials m 
-            JOIN teacher_classes tc ON m.class_id = tc.class_id
+            JOIN classes c ON m.class_id = c.id
+            JOIN teacher_classes tc ON c.id = tc.class_id
             WHERE tc.teacher_id = :teacher_id
         ');
-        $stmt->execute(['teacher_id' => $_SESSION['user_id']]);
+        if (!$stmt->execute(['teacher_id' => $_SESSION['user_id']])) {
+            throw new Exception('Error executing materials count query');
+        }
         $totalMaterials = $stmt->fetchColumn();
-
+    
+        // New students count
         $stmt = $pdo->prepare('
             SELECT COUNT(DISTINCT s.id) 
             FROM users s 
             JOIN teacher_students ts ON s.id = ts.student_id 
             WHERE ts.teacher_id = :teacher_id 
-            AND ts.status = "accepted"
-            AND ts.created_at >= DATE_SUB(NOW(), INTERVAL 1 WEEK)
+            AND ts.status = \'accepted\'
+            AND ts.created_at >= DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 1 WEEK)
         ');
-        $stmt->execute(['teacher_id' => $_SESSION['user_id']]);
+        if (!$stmt->execute(['teacher_id' => $_SESSION['user_id']])) {
+            throw new Exception('Error executing new students count query');
+        }
         $newStudents = $stmt->fetchColumn();
-
-        // Recent students for teacher
+    
+        // Recent students
         $stmt = $pdo->prepare('
-            SELECT s.name, s.email, DATE_FORMAT(ts.created_at, \'%Y-%m-%d\') as joined_date
+            SELECT 
+                s.name, 
+                s.email, 
+                DATE_FORMAT(ts.created_at, \'%Y-%m-%d\') as joined_date
             FROM users s 
             JOIN teacher_students ts ON s.id = ts.student_id
-            WHERE ts.teacher_id = :teacher_id AND ts.status = "accepted"
+            WHERE ts.teacher_id = :teacher_id 
+            AND ts.status = \'accepted\'
+            AND s.role = \'student\'
             ORDER BY ts.created_at DESC 
             LIMIT 5
         ');
-        $stmt->execute(['teacher_id' => $_SESSION['user_id']]);
+        if (!$stmt->execute(['teacher_id' => $_SESSION['user_id']])) {
+            throw new Exception('Error executing recent students query');
+        }
         $recentStudents = $stmt->fetchAll();
-
-        // Recent materials for teacher's classes
+    
+        // Recent materials
         $stmt = $pdo->prepare('
-            SELECT m.title, m.type, c.name as class_name
+            SELECT 
+                m.title, 
+                m.type, 
+                c.name as class_name
             FROM materials m
-            JOIN teacher_classes tc ON m.class_id = tc.class_id
             JOIN classes c ON m.class_id = c.id
+            JOIN teacher_classes tc ON c.id = tc.class_id
             WHERE tc.teacher_id = :teacher_id
             ORDER BY m.created_at DESC
             LIMIT 5
         ');
-        $stmt->execute(['teacher_id' => $_SESSION['user_id']]);
+        if (!$stmt->execute(['teacher_id' => $_SESSION['user_id']])) {
+            throw new Exception('Error executing recent materials query');
+        }
         $recentMaterials = $stmt->fetchAll();
+    
     } else {
         // Admin queries (existing queries)
         $stmt = $pdo->prepare('SELECT COUNT(*) FROM users WHERE role = :role');
@@ -114,8 +140,10 @@ try {
     }
 } catch (PDOException $e) {
     error_log("Dashboard Error: " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'Database error']);
-    error_log($e->getMessage());
+    die(json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]));
+} catch (Exception $e) {
+    error_log("Application Error: " . $e->getMessage());
+    die(json_encode(['success' => false, 'message' => $e->getMessage()]));
 }
 ?>
 
