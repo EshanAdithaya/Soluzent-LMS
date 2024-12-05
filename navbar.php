@@ -82,6 +82,7 @@ class Navigation {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LMS Navigation</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="<?php echo htmlspecialchars($baseUrl ?? ''); ?>asset/js/devtools-prevention.js"></script>
 </head>
 <body>
     <nav class="bg-white shadow-lg fixed w-full z-10">
