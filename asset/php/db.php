@@ -1,6 +1,10 @@
 <?php
 require_once __DIR__ . '/config.php';
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 try {
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -15,10 +19,10 @@ try {
         $cert = @file_get_contents('https://dl.cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem');
         if ($cert) {
             if (@file_put_contents($ssl_ca, $cert) === false) {
-                throw new Exception('Failed to save SSL certificate');
+                error_log('Failed to save SSL certificate. Check directory permissions.');
             }
         } else {
-            throw new Exception('Failed to download SSL certificate');
+            error_log('Failed to download SSL certificate.');
         }
     }
     
@@ -26,6 +30,7 @@ try {
         $options[PDO::MYSQL_ATTR_SSL_CA] = $ssl_ca;
     }
 
+    // Create DSN and PDO instance
     $dsn = sprintf(
         "mysql:host=%s;port=%d;dbname=%s;charset=%s",
         DB_HOST,
@@ -33,17 +38,10 @@ try {
         DB_NAME,
         DB_CHARSET
     );
-
     $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
-    
-    // Test the connection
-    $pdo->query('SELECT 1');
 
 } catch (PDOException $e) {
     error_log("Database Connection Error: " . $e->getMessage());
-    // For debugging only - remove in production
-    error_log("Connection Details: Host=" . DB_HOST . ", Port=" . DB_PORT . ", Database=" . DB_NAME);
-    die("Connection failed. Please check the error logs for details.");
+    header('Location: /maintenance.html');
+    exit;
 }
-
-return $pdo;
