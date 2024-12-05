@@ -123,3 +123,32 @@ ADD COLUMN bio TEXT AFTER teaching_certifications,
 ADD COLUMN linkedin_profile VARCHAR(255) AFTER bio,
 ADD COLUMN emergency_contact_phone VARCHAR(20) AFTER linkedin_profile,
 ADD COLUMN status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending' AFTER emergency_contact_phone;
+
+
+
+--another update 
+-- For materials table
+ALTER TABLE materials 
+DROP FOREIGN KEY materials_ibfk_1;
+
+ALTER TABLE materials
+DROP INDEX materials_ibfk_1;
+
+ALTER TABLE materials
+ADD CONSTRAINT fk_materials_class 
+FOREIGN KEY (class_id) 
+REFERENCES classes(id) 
+ON DELETE CASCADE;
+
+-- For enrollments table
+ALTER TABLE enrollments 
+DROP FOREIGN KEY enrollments_ibfk_2;
+
+ALTER TABLE enrollments
+DROP INDEX enrollments_ibfk_2;
+
+ALTER TABLE enrollments
+ADD CONSTRAINT fk_enrollments_class 
+FOREIGN KEY (class_id) 
+REFERENCES classes(id) 
+ON DELETE CASCADE;

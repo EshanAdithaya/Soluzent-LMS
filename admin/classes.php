@@ -26,12 +26,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
             break;
 
-        case 'delete':
-            $stmt = $pdo->prepare("DELETE FROM classes WHERE id = ?");
-            $stmt->execute([$_POST['class_id']]);
-            header('Location: classes.php');
-            exit;
-            break;
+            case 'delete':
+                try {
+                    $pdo->beginTransaction();
+                    
+                    // The materials and enrollments will be automatically deleted 
+                    // due to ON DELETE CASCADE
+                    $stmt = $pdo->prepare("DELETE FROM classes WHERE id = ?");
+                    $stmt->execute([$_POST['class_id']]);
+                    
+                    $pdo->commit();
+                    $_SESSION['success'] = "Class and all associated materials deleted successfully.";
+                } catch (PDOException $e) {
+                    $pdo->rollBack();
+                    error_log($e->getMessage());
+                    $_SESSION['error'] = "An error occurred while deleting the class.";
+                }
+                header('Location: classes.php');
+                exit;
+                break;
 
         case 'enroll':
             if (isset($_POST['students']) && is_array($_POST['students'])) {
