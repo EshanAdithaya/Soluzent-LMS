@@ -65,8 +65,8 @@ if (!$activeSession) {
                     // Set success message before redirect
                     $_SESSION['login_success'] = true;
 
-                    // Redirect based on role (fixed Dashboard.php to dashboard.php)
-                    if ($user['role'] === 'admin') {
+                    // Redirect based on role
+                    if ($user['role'] === 'admin' || $user['role'] === 'teacher') {
                         header('Location: admin/dashboard.php');
                     } else {
                         header('Location: student/dashboard.php');
@@ -104,7 +104,7 @@ if (!$activeSession) {
                 $updateStmt->execute([$user['id']]);
 
                 // Redirect to appropriate dashboard
-                header('Location: ' . ($user['role'] === 'admin' ? 'admin/dashboard.php' : 'student/dashboard.php'));
+                header('Location: ' . (($user['role'] === 'admin' || $user['role'] === 'teacher') ? 'admin/dashboard.php' : 'student/dashboard.php'));
                 exit;
             }
         } catch (PDOException $e) {
