@@ -4,6 +4,14 @@ require_once '../asset/php/db.php';
 
 session_start();
 
+// Check if user is logged in and has appropriate role
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['admin', 'teacher'])) {
+    header('Location: login.php');
+    exit;
+}
+
+$isTeacher = $_SESSION['role'] === 'teacher';
+
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
@@ -17,6 +25,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     // Start transaction
                     $pdo->beginTransaction();
+                    
+                    // For teachers, verify they can modify this student
+                    if ($isTeacher) {
+                        $stmt = $pdo->prepare("
+                            SELECT COUNT(*) FROM teacher_students 
+                            WHERE teacher_id = ? AND student_id = ? AND status = 'accepted'
+                        ");
+                        $stmt->execute([$_SESSION['user_id'], $_POST['student_id']]);
+                        if ($stmt->fetchColumn() == 0) {
+                            throw new Exception('You do not have permission to modify this student');
+                        }
+                    }
                     
                     // Update basic info
                     $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ?, phone = ? WHERE id = ? AND role = 'student'");
@@ -45,6 +65,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Start transaction
                     $pdo->beginTransaction();
                     
+                    // For teachers, verify they can delete this student
+                    if ($isTeacher) {
+                        $stmt = $pdo->prepare("
+                            SELECT COUNT(*) FROM teacher_students 
+                            WHERE teacher_id = ? AND student_id = ? AND status = 'accepted'
+                        ");
+                        $stmt->execute([$_SESSION['user_id'], $_POST['student_id']]);
+                        if ($stmt->fetchColumn() == 0) {
+                            throw new Exception('You do not have permission to delete this student');
+                        }
+                    }
+                    
                     // Delete enrollments first
                     $stmt = $pdo->prepare("DELETE FROM enrollments WHERE student_id = ?");
                     $stmt->execute([$_POST['student_id']]);
@@ -66,15 +98,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     break;
                     
                 case 'enroll':
+                    // Verify teacher has access to student
+                    if ($isTeacher) {
+                        $stmt = $pdo->prepare("
+                            SELECT COUNT(*) FROM teacher_students 
+                            WHERE teacher_id = ? AND student_id = ? AND status = 'accepted'
+                        ");
+                        $stmt->execute([$_SESSION['user_id'], $_POST['student_id']]);
+                        if ($stmt->fetchColumn() == 0) {
+                            throw new Exception('You do not have permission to enroll this student');
+                        }
+                    }
+                    
                     // Check if already enrolled
-                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM enrollments WHERE student_id = ? AND class_id = ?");
+                    $stmt = $pdo->prepare("
+                        SELECT COUNT(*) FROM enrollments 
+                        WHERE student_id = ? AND class_id = ?
+                    ");
                     $stmt->execute([$_POST['student_id'], $_POST['class_id']]);
                     if ($stmt->fetchColumn() > 0) {
                         throw new Exception('Student is already enrolled in this class');
                     }
                     
-                    $stmt = $pdo->prepare("INSERT INTO enrollments (student_id, class_id, teacher_id) VALUES (?, ?, ?)");
-                    $result = $stmt->execute([$_POST['student_id'], $_POST['class_id'], $_SESSION['user_id']]);
+                    $stmt = $pdo->prepare("
+                        INSERT INTO enrollments (student_id, class_id, teacher_id) 
+                        VALUES (?, ?, ?)
+                    ");
+                    $result = $stmt->execute([
+                        $_POST['student_id'], 
+                        $_POST['class_id'], 
+                        $isTeacher ? $_SESSION['user_id'] : null
+                    ]);
                     
                     if (!$result) {
                         throw new Exception('Failed to enroll student');
@@ -84,8 +138,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     break;
                     
                 case 'unenroll':
-                    $stmt = $pdo->prepare("DELETE FROM enrollments WHERE student_id = ? AND class_id = ?");
-                    $result = $stmt->execute([$_POST['student_id'], $_POST['class_id']]);
+                    if ($isTeacher) {
+                        $stmt = $pdo->prepare("
+                            DELETE FROM enrollments 
+                            WHERE student_id = ? AND class_id = ? AND teacher_id = ?
+                        ");
+                        $result = $stmt->execute([
+                            $_POST['student_id'], 
+                            $_POST['class_id'], 
+                            $_SESSION['user_id']
+                        ]);
+                    } else {
+                        $stmt = $pdo->prepare("
+                            DELETE FROM enrollments 
+                            WHERE student_id = ? AND class_id = ?
+                        ");
+                        $result = $stmt->execute([
+                            $_POST['student_id'], 
+                            $_POST['class_id']
+                        ]);
+                    }
                     
                     if (!$result) {
                         throw new Exception('Failed to unenroll student');
@@ -95,6 +167,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     break;
 
                 case 'generate_invite':
+                    if (!$isTeacher) {
+                        throw new Exception('Only teachers can generate invite links');
+                    }
+                    
                     $pdo->beginTransaction();
                     
                     // Deactivate existing active links
@@ -136,18 +212,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Handle AJAX requests for available classes
 if (isset($_GET['action']) && $_GET['action'] === 'get_available_classes') {
     try {
-        $stmt = $pdo->prepare("
-            SELECT c.id, c.name 
-            FROM classes c
-            WHERE c.id NOT IN (
-                SELECT class_id 
-                FROM enrollments 
-                WHERE student_id = ?
-            )
-            ORDER BY c.name
-        ");
+        if ($isTeacher) {
+            $stmt = $pdo->prepare("
+                SELECT c.id, c.name 
+                FROM classes c
+                JOIN teacher_classes tc ON c.id = tc.class_id
+                WHERE tc.teacher_id = ?
+                AND c.id NOT IN (
+                    SELECT class_id 
+                    FROM enrollments 
+                    WHERE student_id = ?
+                )
+                ORDER BY c.name
+            ");
+            $stmt->execute([$_SESSION['user_id'], $_GET['student_id']]);
+        } else {
+            $stmt = $pdo->prepare("
+                SELECT c.id, c.name 
+                FROM classes c
+                WHERE c.id NOT IN (
+                    SELECT class_id 
+                    FROM enrollments 
+                    WHERE student_id = ?
+                )
+                ORDER BY c.name
+            ");
+            $stmt->execute([$_GET['student_id']]);
+        }
         
-        $stmt->execute([$_GET['student_id']]);
         $availableClasses = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         header('Content-Type: application/json');
@@ -160,29 +252,32 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_available_classes') {
     }
 }
 
-// Get active invite link
-$stmt = $pdo->prepare("
-    SELECT invite_code, expires_at, used_by 
-    FROM teacher_invite_links 
-    WHERE teacher_id = ? 
-    AND expires_at > NOW()
-    AND status = 'active'
-    ORDER BY created_at DESC
-    LIMIT 1
-");
-$stmt->execute([$_SESSION['user_id']]);
-$activeInvite = $stmt->fetch();
+// Get active invite link for teachers
+$activeInvite = null;
+$allInvites = [];
+if ($isTeacher) {
+    $stmt = $pdo->prepare("
+        SELECT invite_code, expires_at, used_by 
+        FROM teacher_invite_links 
+        WHERE teacher_id = ? 
+        AND expires_at > NOW()
+        AND status = 'active'
+        ORDER BY created_at DESC
+        LIMIT 1
+    ");
+    $stmt->execute([$_SESSION['user_id']]);
+    $activeInvite = $stmt->fetch();
 
-// Get all invite links
-$stmt = $pdo->prepare("
-    SELECT invite_code, expires_at, used_by, status, created_at
-    FROM teacher_invite_links 
-    WHERE teacher_id = ? 
-    ORDER BY created_at DESC
-    LIMIT 10
-");
-$stmt->execute([$_SESSION['user_id']]);
-$allInvites = $stmt->fetchAll();
+    $stmt = $pdo->prepare("
+        SELECT invite_code, expires_at, used_by, status, created_at
+        FROM teacher_invite_links 
+        WHERE teacher_id = ? 
+        ORDER BY created_at DESC
+        LIMIT 10
+    ");
+    $stmt->execute([$_SESSION['user_id']]);
+    $allInvites = $stmt->fetchAll();
+}
 
 // Handle search query
 $searchQuery = '';
@@ -190,27 +285,63 @@ if (isset($_GET['search'])) {
     $searchQuery = trim($_GET['search']);
 }
 
-// Get students with additional information
-$stmt = $pdo->prepare("
-    SELECT 
-        u.*,
-        GROUP_CONCAT(DISTINCT c.name ORDER BY c.name ASC SEPARATOR ', ') as enrolled_classes,
-        GROUP_CONCAT(DISTINCT c.id ORDER BY c.name ASC SEPARATOR ',') as class_ids,
-        COUNT(DISTINCT e.class_id) as enrolled_class_count,
-        MAX(u.last_access) as last_access
-    FROM users u
-    LEFT JOIN enrollments e ON u.id = e.student_id
-    LEFT JOIN classes c ON e.class_id = c.id
-    WHERE u.role = 'student' AND u.name LIKE ?
-    GROUP BY u.id
-    ORDER BY u.name
-");
-$stmt->execute(['%' . $searchQuery . '%']);
+// Get students based on role
+if ($isTeacher) {
+    $stmt = $pdo->prepare("
+        SELECT 
+            u.*,
+            GROUP_CONCAT(DISTINCT c.name ORDER BY c.name ASC SEPARATOR ', ') as enrolled_classes,
+            GROUP_CONCAT(DISTINCT c.id ORDER BY c.name ASC SEPARATOR ',') as class_ids,
+            COUNT(DISTINCT e.class_id) as enrolled_class_count,
+            MAX(u.last_access) as last_access
+        FROM users u
+        JOIN teacher_students ts ON u.id = ts.student_id AND ts.teacher_id = ? AND ts.status = 'accepted'
+        LEFT JOIN enrollments e ON u.id = e.student_id AND e.teacher_id = ts.teacher_id
+        LEFT JOIN classes c ON e.class_id = c.id
+        WHERE u.role = 'student' AND u.name LIKE ?
+        GROUP BY u.id
+        ORDER BY u.name
+    ");
+    $stmt->execute([$_SESSION['user_id'], '%' . $searchQuery . '%']);
+} else {
+    $stmt = $pdo->prepare("
+        SELECT 
+            u.*,
+            GROUP_CONCAT(DISTINCT c.name ORDER BY c.name ASC SEPARATOR ', ') as enrolled_classes,
+            GROUP_CONCAT(DISTINCT c.id ORDER BY c.name ASC SEPARATOR ',') as class_ids,
+            COUNT(DISTINCT e.class_id) as enrolled_class_count,
+            MAX(u.last_access) as last_access,
+            GROUP_CONCAT(DISTINCT CONCAT(t.name) ORDER BY t.name ASC SEPARATOR ', ') as registered_teachers
+        FROM users u
+        LEFT JOIN enrollments e ON u.id = e.student_id
+        LEFT JOIN classes c ON e.class_id = c.id
+        LEFT JOIN teacher_students ts ON u.id = ts.student_id
+        LEFT JOIN users t ON ts.teacher_id = t.id AND t.role = 'teacher' AND ts.status = 'accepted'
+        WHERE u.role = 'student' AND u.name LIKE ?
+        GROUP BY u.id
+        ORDER BY u.name
+    ");
+    $stmt->execute(['%' . $searchQuery . '%']);
+}
 $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Fetch all classes for enrollment
-$stmt = $pdo->query("SELECT id, name FROM classes ORDER BY name");
+// Fetch classes for enrollment
+if ($isTeacher) {
+    $stmt = $pdo->prepare("
+        SELECT c.* 
+        FROM classes c
+        JOIN teacher_classes tc ON c.id = tc.class_id
+        WHERE tc.teacher_id = ?
+        ORDER BY c.name
+    ");
+    $stmt->execute([$_SESSION['user_id']]);
+} else {
+    $stmt = $pdo->query("SELECT * FROM classes ORDER BY name");
+}
 $classes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Set page title based on role
+$title = $isTeacher ? 'My Students' : 'Students Management';
 ?>
 
 <!DOCTYPE html>
@@ -218,7 +349,7 @@ $classes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Students Management - Admin Dashboard</title>
+    <title><?= $title ?> - Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50">
@@ -244,9 +375,9 @@ $classes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         <!-- Header -->
         <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-gray-900">Students Management</h2>
+            <h2 class="text-2xl font-bold text-gray-900"><?= $title ?></h2>
             <div class="flex space-x-4">
-                <form method="GET" class="flex space-x-2">
+            <form method="GET" class="flex space-x-2">
                     <input type="text" name="search" value="<?= htmlspecialchars($searchQuery) ?>" 
                            placeholder="Search students..." 
                            class="px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -255,10 +386,12 @@ $classes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         Search
                     </button>
                 </form>
+                <?php if ($isTeacher): ?>
                 <button onclick="openInviteModal()" 
                         class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
                     Generate Invite Link
                 </button>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -272,6 +405,9 @@ $classes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Access</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Enrolled Classes</th>
+                        <?php if (!$isTeacher): ?>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered Teachers</th>
+                        <?php endif; ?>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
@@ -293,6 +429,11 @@ $classes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <td class="px-6 py-4 text-sm text-gray-500">
                             <?= $student['enrolled_classes'] ? htmlspecialchars($student['enrolled_classes']) : 'No classes' ?>
                         </td>
+                        <?php if (!$isTeacher): ?>
+                        <td class="px-6 py-4 text-sm text-gray-500">
+                            <?= $student['registered_teachers'] ? htmlspecialchars($student['registered_teachers']) : 'No teachers' ?>
+                        </td>
+                        <?php endif; ?>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <button onclick="openEditModal(<?= htmlspecialchars(json_encode($student)) ?>)" 
                                     class="text-indigo-600 hover:text-indigo-900">Edit</button>
@@ -321,7 +462,7 @@ $classes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div>
                         <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
                         <input type="text" name="name" id="editName" required
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     </div>
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
@@ -377,6 +518,7 @@ $classes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
+    <?php if ($isTeacher): ?>
     <!-- Invite Modal -->
     <div id="inviteModal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
         <div class="bg-white rounded-lg p-8 max-w-md w-full">
@@ -431,6 +573,7 @@ $classes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </button>
         </div>
     </div>
+    <?php endif; ?>
 
     <script>
         function validateForm() {
@@ -542,7 +685,7 @@ $classes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         window.onclick = function(event) {
             ['editModal', 'enrollModal', 'inviteModal'].forEach(modalId => {
                 const modal = document.getElementById(modalId);
-                if (event.target === modal) {
+                if (modal && event.target === modal) {
                     closeModal(modalId);
                 }
             });
@@ -552,7 +695,10 @@ $classes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 ['editModal', 'enrollModal', 'inviteModal'].forEach(modalId => {
-                    closeModal(modalId);
+                    const modal = document.getElementById(modalId);
+                    if (modal) {
+                        closeModal(modalId);
+                    }
                 });
             }
         });
