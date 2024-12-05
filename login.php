@@ -123,6 +123,7 @@ if (!$activeSession) {
     <script src="<?php echo htmlspecialchars($baseUrl ?? ''); ?>asset/js/devtools-prevention.js"></script>
 
 </head>
+<?php include_once 'navbar.php';?>
 <body class="bg-gray-50">
     <div class="min-h-screen flex items-center justify-center">
         <div class="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-lg">
@@ -154,7 +155,7 @@ if (!$activeSession) {
             <?php endif; ?>
 
             <!-- Login Form -->
-            <form class="mt-8 space-y-6" method="POST" action="">
+            <form class="mt-8 space-y-6" method="POST" action="" id="loginForm">
                 <div class="space-y-4">
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
@@ -185,9 +186,13 @@ if (!$activeSession) {
                 </div>
 
                 <div>
-                    <button type="submit"
+                    <button type="submit" id="submitBtn"
                         class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Sign in
+                        <span id="buttonText">Sign in</span>
+                        <svg id="loadingIcon" class="hidden animate-spin ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
                     </button>
                 </div>
             </form>
@@ -203,5 +208,40 @@ if (!$activeSession) {
             <?php endif; ?>
         </div>
     </div>
+    <?php include_once 'footer.php'; ?>
+    <script>
+    function showLoadingState() {
+        const button = document.getElementById('submitBtn');
+        const buttonText = document.getElementById('buttonText');
+        const loadingIcon = document.getElementById('loadingIcon');
+        
+        // Disable button
+        button.disabled = true;
+        button.classList.add('opacity-75', 'cursor-not-allowed');
+        
+        // Show loading state
+        buttonText.textContent = 'Signing in...';
+        loadingIcon.classList.remove('hidden');
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', showLoadingState);
+
+    // Add event listeners for Enter key press
+    document.getElementById('email').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            showLoadingState();
+            document.getElementById('loginForm').submit();
+        }
+    });
+
+    document.getElementById('password').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            showLoadingState();
+            document.getElementById('loginForm').submit();
+        }
+    });
+    </script>
 </body>
 </html>
