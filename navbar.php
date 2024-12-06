@@ -13,7 +13,7 @@ class Navigation {
     private function setupMenuItems() {
         $this->menuItems = [
             'public' => [
-                ['index.php', 'Home'],
+                // ['index.php', 'Home'],
                 ['about.php', 'About Us'],
                 ['features.php', 'Features'],
                 ['pricing.php', 'Pricing'],

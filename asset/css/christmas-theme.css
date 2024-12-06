@@ -13,7 +13,7 @@
     position: absolute;
     width: 10px;
     height: 10px;
-    background: rgb(196, 195, 195);
+    background: rgb(255, 255, 255);
     border-radius: 50%;
     animation: snowfall linear infinite;
     filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.8));
@@ -31,15 +31,7 @@
 }
 
 /* Christmas gradient background */
-.christmas-bg {
-    background: linear-gradient(135deg, #1a472a 0%, #2a623d 100%);
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: -1;
-}
+
 
 /* Festive navbar */
 .christmas-nav {
@@ -48,16 +40,3 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-
-
-/* Christmas buttons */
-
-
-/* Christmas badges */
-.christmas-badge {
-    background-color: #e8f5e9;
-    color: #1a472a;
-    border: 1px solid #c41e3a;
-    padding: 0.25rem 0.75rem;
-    border-radius: 9999px;
-}
