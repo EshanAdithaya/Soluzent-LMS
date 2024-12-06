@@ -15,8 +15,28 @@ define('DB_PASS', 'AVNS_l3SW8eljPIvmmGNUCFK');
 define('DB_CHARSET', 'utf8mb4');
 define('DB_PORT', 25060);
 
-// Start Session
-// session_start();
+// reCAPTCHA verification function
+function verifyRecaptcha($recaptchaResponse) {
+    $secretKey = "6LfS-pMqAAAAABSp6DEft8G35rthZ6UeTlqSbbO1"; // Replace with your secret key
+    
+    $url = 'https://www.google.com/recaptcha/api/siteverify';
+    $data = [
+        'secret' => $secretKey,
+        'response' => $recaptchaResponse
+    ];
+
+    $options = [
+        'http' => [
+            'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+            'method' => 'POST',
+            'content' => http_build_query($data)
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    return json_decode($result)->success;
+}
 
 // Database Connection
 try {
@@ -58,98 +78,103 @@ try {
 $response = ['success' => false, 'message' => ''];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Sanitize inputs
-    $name = filter_var($_POST['name'], FILTER_SANITIZE_STRING);
-    $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
-    $phone = filter_var($_POST['phone'], FILTER_SANITIZE_STRING);
-    $password = $_POST['password'];
-    $confirm_password = $_POST['confirm_password'];
-
-
-    if (isset($_GET['invite'])) {
-        $stmt = $pdo->prepare("
-            SELECT t.name as teacher_name, til.* 
-            FROM teacher_invite_links til
-            JOIN users t ON til.teacher_id = t.id
-            WHERE til.invite_code = ? 
-            AND til.expires_at > NOW()
-            AND til.used_by IS NULL
-        ");
-        $stmt->execute([$_GET['invite']]);
-        $invite = $stmt->fetch();
-    
-        if ($invite) {
-            // Store invite data in session for use after signup
-            $_SESSION['teacher_invite'] = [
-                'code' => $_GET['invite'],
-                'teacher_id' => $invite['teacher_id']
-            ];
-        }
-    }
-    
-    // After successful user creation, add:
-    if (isset($_SESSION['teacher_invite'])) {
-        $stmt = $pdo->prepare("
-            UPDATE teacher_invite_links 
-            SET used_by = ? 
-            WHERE invite_code = ?
-        ");
-        $stmt->execute([$userId, $_SESSION['teacher_invite']['code']]);
-        
-        $stmt = $pdo->prepare("
-            INSERT INTO teacher_students (teacher_id, student_id, status) 
-            VALUES (?, ?, 'accepted')
-        ");
-        $stmt->execute([$_SESSION['teacher_invite']['teacher_id'], $userId]);
-        
-        unset($_SESSION['teacher_invite']);
-    }
-    
-    // Validate inputs
-    if (empty($name) || empty($email) || empty($phone) || empty($password)) {
-        $response['message'] = 'Please fill in all fields';
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $response['message'] = 'Invalid email format';
-    } elseif ($password !== $confirm_password) {
-        $response['message'] = 'Passwords do not match';
-    } elseif (strlen($password) < 6) {
-        $response['message'] = 'Password must be at least 6 characters long';
+    // Verify reCAPTCHA first
+    if (!isset($_POST['g-recaptcha-response']) || !verifyRecaptcha($_POST['g-recaptcha-response'])) {
+        $response['message'] = 'Please complete the reCAPTCHA verification.';
     } else {
-        try {
-            // Check if email already exists
-            $stmt = $pdo->prepare('SELECT id FROM users WHERE email = ?');
-            $stmt->execute([$email]);
-            
-            if ($stmt->rowCount() > 0) {
-                $response['message'] = 'Email already exists';
-            } else {
-                // Hash password
-                $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+        // Sanitize inputs
+        $name = filter_var($_POST['name'], FILTER_SANITIZE_STRING);
+        $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
+        $phone = filter_var($_POST['phone'], FILTER_SANITIZE_STRING);
+        $password = $_POST['password'];
+        $confirm_password = $_POST['confirm_password'];
 
-                // Insert new user with explicit role as student
-                $stmt = $pdo->prepare('
-                    INSERT INTO users (name, email, phone, password, role, created_at) 
-                    VALUES (?, ?, ?, ?, ?, NOW())
-                ');
-
-                $stmt->execute([$name, $email, $phone, $hashedPassword, 'student']);
-
-                if ($stmt->rowCount() > 0) {
-                    $response = [
-                        'success' => true,
-                        'message' => 'Account created successfully! Please login.'
-                    ];
-                    
-                    // Redirect to login page on success
-                    header('Location: login.php');
-                    exit;
-                } else {
-                    throw new Exception('Failed to insert user');
-                }
+        if (isset($_GET['invite'])) {
+            $stmt = $pdo->prepare("
+                SELECT t.name as teacher_name, til.* 
+                FROM teacher_invite_links til
+                JOIN users t ON til.teacher_id = t.id
+                WHERE til.invite_code = ? 
+                AND til.expires_at > NOW()
+                AND til.used_by IS NULL
+            ");
+            $stmt->execute([$_GET['invite']]);
+            $invite = $stmt->fetch();
+        
+            if ($invite) {
+                $_SESSION['teacher_invite'] = [
+                    'code' => $_GET['invite'],
+                    'teacher_id' => $invite['teacher_id']
+                ];
             }
-        } catch (Exception $e) {
-            $response['message'] = 'Database error occurred: ' . $e->getMessage();
-            error_log($e->getMessage());
+        }
+        
+        // Validate inputs
+        if (empty($name) || empty($email) || empty($phone) || empty($password)) {
+            $response['message'] = 'Please fill in all fields';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $response['message'] = 'Invalid email format';
+        } elseif ($password !== $confirm_password) {
+            $response['message'] = 'Passwords do not match';
+        } elseif (strlen($password) < 6) {
+            $response['message'] = 'Password must be at least 6 characters long';
+        } else {
+            try {
+                // Check if email already exists
+                $stmt = $pdo->prepare('SELECT id FROM users WHERE email = ?');
+                $stmt->execute([$email]);
+                
+                if ($stmt->rowCount() > 0) {
+                    $response['message'] = 'Email already exists';
+                } else {
+                    // Hash password
+                    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+                    // Insert new user with explicit role as student
+                    $stmt = $pdo->prepare('
+                        INSERT INTO users (name, email, phone, password, role, created_at) 
+                        VALUES (?, ?, ?, ?, ?, NOW())
+                    ');
+
+                    $stmt->execute([$name, $email, $phone, $hashedPassword, 'student']);
+
+                    if ($stmt->rowCount() > 0) {
+                        $userId = $pdo->lastInsertId();
+                        
+                        // Handle teacher invite
+                        if (isset($_SESSION['teacher_invite'])) {
+                            $stmt = $pdo->prepare("
+                                UPDATE teacher_invite_links 
+                                SET used_by = ? 
+                                WHERE invite_code = ?
+                            ");
+                            $stmt->execute([$userId, $_SESSION['teacher_invite']['code']]);
+                            
+                            $stmt = $pdo->prepare("
+                                INSERT INTO teacher_students (teacher_id, student_id, status) 
+                                VALUES (?, ?, 'accepted')
+                            ");
+                            $stmt->execute([$_SESSION['teacher_invite']['teacher_id'], $userId]);
+                            
+                            unset($_SESSION['teacher_invite']);
+                        }
+
+                        $response = [
+                            'success' => true,
+                            'message' => 'Account created successfully! Please login.'
+                        ];
+                        
+                        // Redirect to login page on success
+                        header('Location: login.php');
+                        exit;
+                    } else {
+                        throw new Exception('Failed to insert user');
+                    }
+                }
+            } catch (Exception $e) {
+                $response['message'] = 'Database error occurred: ' . $e->getMessage();
+                error_log($e->getMessage());
+            }
         }
     }
 }
@@ -161,9 +186,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up - Education Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- <script src="<?php 
-    // echo htmlspecialchars($baseUrl ?? ''); 
-    ?>asset/js/devtools-prevention.js"></script> -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <?php include_once 'navbar.php';?>
 <body class="bg-gray-50">
@@ -216,6 +239,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input id="confirm_password" name="confirm_password" type="password" required 
                             class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
+
+                    <!-- Add reCAPTCHA -->
+                    <div class="flex justify-center">
+                        <div class="g-recaptcha" data-sitekey="6LfS-pMqAAAAABIZAGYVYyCZf2UwDbtehvEsYYti"></div>
+                    </div>
                 </div>
 
                 <div>
@@ -246,6 +274,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const submitBtn = document.getElementById('submitBtn');
             const buttonText = document.getElementById('buttonText');
             const loadingIcon = document.getElementById('loadingIcon');
+            
+            // Check reCAPTCHA
+            if (!grecaptcha.getResponse()) {
+                e.preventDefault();
+                alert('Please complete the reCAPTCHA verification.');
+                return false;
+            }
 
             // Show loading state
             buttonText.textContent = 'Creating Account...';
