@@ -15,29 +15,28 @@ class Navigation {
     private function setupMenuItems() {
         $this->menuItems = [
             'public' => [
-                ['url' => '/index.php', 'text' => 'Home'],
-                ['url' => '/about.php', 'text' => 'About Us'],
-                ['url' => '/features.php', 'text' => 'Features'],
-                ['url' => '/pricing.php', 'text' => 'Pricing'],
-                ['url' => '/contact.php', 'text' => 'Contact'],
+                ['index.php', 'Home'],
+                ['about.php', 'About Us'],
+                ['features.php', 'Features'],
+                ['pricing.php', 'Pricing'],
+                ['contact.php', 'Contact'],
             ],
             'auth' => [
                 'student' => [
-                    ['url' => 'student/dashboard.php', 'text' => 'Dashboard'],
-                    ['url' => 'profile.php', 'text' => 'Profile'],
+                    ['student/dashboard.php', 'Dashboard'],
+                    ['profile.php', 'Profile'],
                 ],
                 'admin' => [
-                    ['url' => 'admin/dashboard.php', 'text' => 'Dashboard'],
-                    // ['url' => 'admin/teacher-applications.php', 'text' => 'Teacher Applications'],
-                    ['url' => 'admin/classes.php', 'text' => 'Classes'],
-                    ['url' => 'admin/materials.php', 'text' => 'Materials'],
-                    ['url' => 'profile.php', 'text' => 'Profile'],
+                    ['admin/dashboard.php', 'Dashboard'],
+                    ['admin/classes.php', 'Classes'],
+                    ['admin/materials.php', 'Materials'],
+                    ['profile.php', 'Profile'],
                 ],
                 'teacher' => [
-                    ['url' => 'admin/dashboard.php', 'text' => 'Dashboard'],
-                    ['url' => 'admin/classes.php', 'text' => 'Classes'],
-                    ['url' => 'admin/materials.php', 'text' => 'Materials'],
-                    ['url' => 'profile.php', 'text' => 'Profile'],
+                    ['admin/dashboard.php', 'Dashboard'],
+                    ['admin/classes.php', 'Classes'],
+                    ['admin/materials.php', 'Materials'],
+                    ['profile.php', 'Profile'],
                 ]
             ]
         ];
@@ -106,7 +105,7 @@ class Navigation {
                     <?php if (!$isAuthenticated): ?>
                         <!-- Public Navigation -->
                         <?php foreach ($this->menuItems['public'] as $item): ?>
-                            <?= $this->renderLink($item['url'], $item['text']) ?>
+                            <?= $this->renderLink($item[0], $item[1]) ?>
                         <?php endforeach; ?>
                         
                         <!-- Auth Links -->
@@ -116,7 +115,7 @@ class Navigation {
                         <!-- Authenticated Navigation -->
                         <?php if (isset($this->menuItems['auth'][$userRole])): ?>
                             <?php foreach ($this->menuItems['auth'][$userRole] as $item): ?>
-                                <?= $this->renderLink($item['url'], $item['text']) ?>
+                                <?= $this->renderLink($item[0], $item[1]) ?>
                             <?php endforeach; ?>
                         <?php endif; ?>
                         
@@ -149,7 +148,7 @@ class Navigation {
             <div class="px-2 pt-2 pb-3 space-y-1">
                 <?php if (!$isAuthenticated): ?>
                     <?php foreach ($this->menuItems['public'] as $item): ?>
-                        <?= $this->renderLink($item['url'], $item['text'], false, true) ?>
+                        <?= $this->renderLink($item[0], $item[1], false, true) ?>
                     <?php endforeach; ?>
                     <?= $this->renderLink('login.php', 'Login', false, true) ?>
                     <div class="px-3 py-2">
@@ -158,7 +157,7 @@ class Navigation {
                 <?php else: ?>
                     <?php if (isset($this->menuItems['auth'][$userRole])): ?>
                         <?php foreach ($this->menuItems['auth'][$userRole] as $item): ?>
-                            <?= $this->renderLink($item['url'], $item['text'], false, true) ?>
+                            <?= $this->renderLink($item[0], $item[1], false, true) ?>
                         <?php endforeach; ?>
                     <?php endif; ?>
                     
