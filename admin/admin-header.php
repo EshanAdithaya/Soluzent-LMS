@@ -1,5 +1,5 @@
 <?php
-include_once 'adminSession.php';
+// include_once 'adminSession.php';
 
 // Simple page and role detection
 $current_page = basename($_SERVER['PHP_SELF']);
