@@ -94,24 +94,19 @@ if (!$activeSession) {
             $stmt->execute([$_COOKIE['remember_token']]);
             $user = $stmt->fetch();
 
-// In your login processing code, update the redirects
-if ($user && password_verify($password, $user['password'])) {
-    $_SESSION['user_id'] = $user['id'];
-    $_SESSION['role'] = $user['role'];
-    $_SESSION['name'] = $user['name'];
-    
-    // Update last access time
-    $updateStmt = $pdo->prepare('UPDATE users SET last_access = NOW() WHERE id = ?');
-    $updateStmt->execute([$user['id']]);
-    
-    // Use absolute URLs for redirects
-    if ($user['role'] === 'admin' || $user['role'] === 'teacher') {
-        header("Location: " . APP_URL . "/admin/dashboard.php");
-    } else {
-        header("Location: " . APP_URL . "/student/dashboard.php");
-    }
-    exit;
-}
+            if ($user) {
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['role'] = $user['role'];
+                $_SESSION['name'] = $user['name'];
+
+                // Update last access
+                $updateStmt = $pdo->prepare('UPDATE users SET last_access = NOW() WHERE id = ?');
+                $updateStmt->execute([$user['id']]);
+
+                // Redirect to appropriate dashboard
+                header('Location: ' . (($user['role'] === 'admin' || $user['role'] === 'teacher') ? 'admin/dashboard.php' : 'student/dashboard.php'));
+                exit;
+            }
         } catch (PDOException $e) {
             error_log('Remember Token Error: ' . $e->getMessage());
         }

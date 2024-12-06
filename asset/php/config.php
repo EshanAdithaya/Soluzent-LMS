@@ -91,6 +91,7 @@ function redirect($path) {
         exit;
     exit;
 }
+}
 
 function is_ajax_request() {
     return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && 
@@ -131,6 +132,16 @@ function is_logged_in() {
 //     return isset($_SESSION['role']) && ($_SESSION['role'] === 'teacher' || $_SESSION['role'] === 'admin');
 // }
 
+
+// Create upload directory if it doesn't exist
+if (!file_exists(UPLOAD_PATH)) {
+    mkdir(UPLOAD_PATH, 0755, true);
+}
+
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Create upload directory if it doesn't exist
 if (!file_exists(UPLOAD_PATH)) {
