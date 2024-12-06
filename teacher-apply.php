@@ -2,70 +2,98 @@
 require_once 'asset/php/config.php';
 require_once 'asset/php/db.php';
 
+// Add reCAPTCHA verification function
+function verifyRecaptcha($recaptchaResponse) {
+    $secretKey = "6LfS-pMqAAAAABSp6DEft8G35rthZ6UeTlqSbbO1"; // Replace with your secret key
+    
+    $url = 'https://www.google.com/recaptcha/api/siteverify';
+    $data = [
+        'secret' => $secretKey,
+        'response' => $recaptchaResponse
+    ];
+
+    $options = [
+        'http' => [
+            'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+            'method' => 'POST',
+            'content' => http_build_query($data)
+        ]
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    return json_decode($result)->success;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        // Check if email already exists
-        $check = $pdo->prepare("SELECT id FROM users WHERE email = ?");
-        $check->execute([$_POST['email']]);
-        
-        if ($check->rowCount() > 0) {
-            $error = "Email already exists. Please use a different email or login if you already have an account.";
+        // Verify reCAPTCHA first
+        if (!isset($_POST['g-recaptcha-response']) || !verifyRecaptcha($_POST['g-recaptcha-response'])) {
+            $error = "Please complete the reCAPTCHA verification.";
         } else {
-            $pdo->beginTransaction();
-
-            // First create the user account
-            $hashedPassword = password_hash($_POST['password'], PASSWORD_DEFAULT);
+            // Check if email already exists
+            $check = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+            $check->execute([$_POST['email']]);
             
-            $stmt = $pdo->prepare("
-                INSERT INTO users (name, email, phone, password, role)
-                VALUES (?, ?, ?, ?, 'student')
-            ");
-            
-            $stmt->execute([
-                $_POST['name'],
-                $_POST['email'],
-                $_POST['phone'],
-                $hashedPassword
-            ]);
-            
-            $userId = $pdo->lastInsertId();
+            if ($check->rowCount() > 0) {
+                $error = "Email already exists. Please use a different email or login if you already have an account.";
+            } else {
+                $pdo->beginTransaction();
 
-            // Then create the teacher profile
-            $stmt = $pdo->prepare("
-                INSERT INTO teacher_profiles (
-                    user_id, email, phone, qualification, expertise, bio,
-                    address, city, state, postal_code,
-                    teaching_certifications, linkedin_profile,
-                    emergency_contact_phone, status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
-            ");
-            
-            $stmt->execute([
-                $userId,
-                $_POST['email'],
-                $_POST['phone'],
-                $_POST['qualification'],
-                $_POST['expertise'],
-                $_POST['bio'],
-                $_POST['address'] ?? null,
-                $_POST['city'] ?? null,
-                $_POST['state'] ?? null,
-                $_POST['postal_code'] ?? null,
-                $_POST['teaching_certifications'] ?? null,
-                $_POST['linkedin_profile'] ?? null,
-                $_POST['emergency_contact_phone'] ?? null
-            ]);
+                // First create the user account
+                $hashedPassword = password_hash($_POST['password'], PASSWORD_DEFAULT);
+                
+                $stmt = $pdo->prepare("
+                    INSERT INTO users (name, email, phone, password, role)
+                    VALUES (?, ?, ?, ?, 'student')
+                ");
+                
+                $stmt->execute([
+                    $_POST['name'],
+                    $_POST['email'],
+                    $_POST['phone'],
+                    $hashedPassword
+                ]);
+                
+                $userId = $pdo->lastInsertId();
 
-            $pdo->commit();
+                // Then create the teacher profile
+                $stmt = $pdo->prepare("
+                    INSERT INTO teacher_profiles (
+                        user_id, email, phone, qualification, expertise, bio,
+                        address, city, state, postal_code,
+                        teaching_certifications, linkedin_profile,
+                        emergency_contact_phone, status
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+                ");
+                
+                $stmt->execute([
+                    $userId,
+                    $_POST['email'],
+                    $_POST['phone'],
+                    $_POST['qualification'],
+                    $_POST['expertise'],
+                    $_POST['bio'],
+                    $_POST['address'] ?? null,
+                    $_POST['city'] ?? null,
+                    $_POST['state'] ?? null,
+                    $_POST['postal_code'] ?? null,
+                    $_POST['teaching_certifications'] ?? null,
+                    $_POST['linkedin_profile'] ?? null,
+                    $_POST['emergency_contact_phone'] ?? null
+                ]);
 
-            // Log the user in
-            $_SESSION['user_id'] = $userId;
-            $_SESSION['role'] = 'student';
-            $_SESSION['name'] = $_POST['name'];
-            $_SESSION['email'] = $_POST['email'];
+                $pdo->commit();
 
-            header('Location: teacher-apply.php?success=1');
-            exit;
+                // Log the user in
+                $_SESSION['user_id'] = $userId;
+                $_SESSION['role'] = 'student';
+                $_SESSION['name'] = $_POST['name'];
+                $_SESSION['email'] = $_POST['email'];
+
+                header('Location: teacher-apply.php?success=1');
+                exit;
+            }
         }
     } catch (PDOException $e) {
         $pdo->rollBack();
@@ -82,6 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Application</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body class="bg-gray-50">
     <?php include_once 'navbar.php'; ?>
@@ -210,6 +239,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
 
+                <!-- Add reCAPTCHA before submit button -->
+                <div class="mt-6 flex justify-center">
+                    <div class="g-recaptcha" data-sitekey="6LfS-pMqAAAAABIZAGYVYyCZf2UwDbtehvEsYYti"></div>
+                </div>
+
                 <div class="mt-6">
                     <button type="submit"
                         class="w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
@@ -224,6 +258,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     function validateForm() {
         const password = document.getElementById('password').value;
         const confirm_password = document.getElementById('confirm_password').value;
+        const recaptchaResponse = grecaptcha.getResponse();
 
         if (password !== confirm_password) {
             alert("Passwords do not match!");
@@ -232,6 +267,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (password.length < 6) {
             alert("Password must be at least 6 characters long!");
+            return false;
+        }
+
+        if (!recaptchaResponse) {
+            alert("Please complete the reCAPTCHA verification!");
             return false;
         }
 
