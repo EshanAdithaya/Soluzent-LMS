@@ -76,8 +76,10 @@ class Navigation {
     <script src="asset/js/devtools-prevention.js"></script>
 </head>
 <body>
-    <!-- Snow container -->
-    <div id="snow" class="snow"></div>
+
+<div class="christmas-bg"></div>
+<div id="snow" class="snow"></div>
+
 
     <nav class="bg-white shadow-lg fixed w-full z-10">
         <div class="max-w-7xl mx-auto px-4">
