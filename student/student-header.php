@@ -1,7 +1,7 @@
 <!-- <script src="<?php 
 // echo htmlspecialchars($baseUrl ?? ''); 
 ?>../asset/js/devtools-prevention.js"></script> -->
-<?php include_once 'session.php'; 
+<?php 
 $current_page = basename($_SERVER['PHP_SELF']);
 $is_profile_page = ($current_page === 'profile.php');
 
