@@ -1,10 +1,10 @@
 <?php
 require_once '../asset/php/config.php';
 require_once '../asset/php/db.php';
-session_start();
 
 $title = isset($_SESSION['role']) && $_SESSION['role'] === 'teacher' ? 'Teacher Dashboard' : 'Admin Dashboard';
 $isTeacher = isset($_SESSION['role']) && $_SESSION['role'] === 'teacher';
+$is_dashboard_page = basename($_SERVER['PHP_SELF']) === 'dashboard.php';
 
 try {
     if ($isTeacher) {
@@ -151,12 +151,12 @@ try {
 <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
     <!-- Welcome Section -->
     <div class="px-4 py-5 sm:px-6">
-        <?php if ($is_dashboard_page): ?>
-            <h2 class="text-2xl font-bold text-gray-900"><?php echo $title; ?></h2>
-        <?php else: ?>
+        <?php if (!$is_dashboard_page): ?>
             <a href="<?php echo $admin_prefix; ?>dashboard.php">
                 <h2 class="text-2xl font-bold text-gray-900"><?php echo $title; ?></h2>
             </a>
+        <?php else: ?>
+            <h2 class="text-2xl font-bold text-gray-900"><?php echo $title; ?></h2>
         <?php endif; ?>
 
         <div class="flex items-center justify-between">

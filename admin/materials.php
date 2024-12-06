@@ -1,13 +1,7 @@
 <?php
 require_once __DIR__ . '/../asset/php/config.php';
 require_once '../asset/php/db.php';
-session_start();
 
-// Check if user is logged in and has appropriate role
-if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['admin', 'teacher'])) {
-    header('Location: login.php');
-    exit;
-}
 
 $isTeacher = $_SESSION['role'] === 'teacher';
 
