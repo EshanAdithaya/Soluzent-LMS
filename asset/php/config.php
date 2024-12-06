@@ -1,23 +1,22 @@
 <?php
-// Start of config.php - Session Configuration FIRST
-$session_path = '/';
-session_set_cookie_params([
-    'lifetime' => 3600,
-    'path' => $session_path,
-    'domain' => parse_url('https://plankton-app-us3aj.ondigitalocean.app', PHP_URL_HOST),
-    'secure' => true,
-    'httponly' => true,
-    'samesite' => 'Strict'
-]);
-
-ini_set('session.cookie_httponly', 1);
-ini_set('session.use_only_cookies', 1);
-ini_set('session.cookie_secure', 1);
-ini_set('session.cookie_samesite', 'Strict');
-ini_set('session.gc_maxlifetime', 3600);
-
-// Start session if not already started
+// Session handling - must be at the very top
 if (session_status() === PHP_SESSION_NONE) {
+    $session_path = '/';
+    session_set_cookie_params([
+        'lifetime' => 3600,
+        'path' => $session_path,
+        'domain' => parse_url('https://plankton-app-us3aj.ondigitalocean.app', PHP_URL_HOST),
+        'secure' => true,
+        'httponly' => true,
+        'samesite' => 'Strict'
+    ]);
+
+    ini_set('session.cookie_httponly', 1);
+    ini_set('session.use_only_cookies', 1);
+    ini_set('session.cookie_secure', 1);
+    ini_set('session.cookie_samesite', 'Strict');
+    ini_set('session.gc_maxlifetime', 3600);
+
     session_start();
 }
 
@@ -61,7 +60,7 @@ define('SMTP_PASS', 'your-password');
 define('SMTP_FROM', 'noreply@your-domain.com');
 
 // Security
-define('HASH_COST', 12); // For password hashing
+define('HASH_COST', 12);
 
 // Time Zone
 date_default_timezone_set('UTC');
@@ -93,7 +92,6 @@ function is_ajax_request() {
            strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
 }
 
-// Response Functions
 function json_response($data, $status = 200) {
     http_response_code($status);
     header('Content-Type: application/json');
@@ -105,7 +103,6 @@ function error_response($message, $status = 400) {
     json_response(['error' => $message], $status);
 }
 
-// Session Security
 function regenerate_session() {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -113,7 +110,6 @@ function regenerate_session() {
     session_regenerate_id(true);
 }
 
-// Check if user is logged in
 function is_logged_in() {
     return isset($_SESSION['user_id']);
 }
@@ -121,4 +117,4 @@ function is_logged_in() {
 // Create upload directory if it doesn't exist
 if (!file_exists(UPLOAD_PATH)) {
     mkdir(UPLOAD_PATH, 0755, true);
-} 
+}

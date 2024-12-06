@@ -16,7 +16,7 @@ define('DB_CHARSET', 'utf8mb4');
 define('DB_PORT', 25060);
 
 // Start Session
-session_start();
+// session_start();
 
 // Database Connection
 try {

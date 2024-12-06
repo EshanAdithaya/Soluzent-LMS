@@ -1,5 +1,5 @@
 <?php
-session_start();
+// session_start();
 require_once 'asset/php/config.php';
 require_once 'asset/php/db.php';
 

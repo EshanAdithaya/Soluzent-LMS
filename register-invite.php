@@ -1,7 +1,7 @@
 <?php
 require_once 'asset/php/config.php';
 require_once 'asset/php/db.php';
-session_start();
+// session_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $inviteCode = $_POST['invite_code'];

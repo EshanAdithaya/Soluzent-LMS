@@ -1,7 +1,7 @@
 <?php
 // auth/logout.php
 
-session_start();
+// session_start();
 
 // Clear all session variables
 $_SESSION = array();
