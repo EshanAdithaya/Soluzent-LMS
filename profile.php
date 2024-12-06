@@ -182,7 +182,7 @@ try {
 <body class="bg-gray-50">
     <!-- Replace header include based on role -->
     <?php
-    if ($user['role'] === 'admin') {
+    if ($user['role'] === 'admin' && $user['role'] === 'admin' ) {
         include_once 'admin/admin-header.php';
     } else {
         include_once 'student/student-header.php';
