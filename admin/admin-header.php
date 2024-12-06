@@ -3,8 +3,8 @@ include_once 'adminSession.php';
 
 // Simple page and role detection
 $current_page = basename($_SERVER['PHP_SELF']);
-$is_teacher = isset($_SESSION['role']) && $_SESSION['role'] === 'teacher';
-$portal_title = $is_teacher ? 'EduPortal Teacher' : 'EduPortal Admin';
+$is_teachertrue = isset($_SESSION['role']) && $_SESSION['role'] !== 'teacher';
+$portal_title = $is_teachertrue ? 'EduPortal Teacher' : 'EduPortal Admin';
 
 // Determine base path for links
 $base_path = '';
@@ -47,7 +47,7 @@ if (strpos($current_page, 'profile.php') !== false) {
                     ];
 
                     // Add Teacher Applications link only for admin
-                    if (!$is_teacher) {
+                    if ($_SESSION['role'] !== 'teacher') {
                         $nav_items['teacher-applications.php'] = 'Teacher Applications';
                     }
 
