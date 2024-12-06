@@ -2,6 +2,10 @@
 require_once 'asset/php/config.php';
 require_once 'asset/php/db.php';
 
+// Add this at the top with your other constants
+define('RECAPTCHA_SITE_KEY', '6LfS-pMqAAAAABIZAGYVYyCZf2UwDbtehvEsYYti');
+define('RECAPTCHA_SECRET_KEY', '6LfS-pMqAAAAABSp6DEft8G35rthZ6UeTlqSbbO1');
+
 // Initialize variables
 $activeSession = false;
 $currentUser = '';
@@ -76,51 +80,62 @@ if (!$activeSession && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
     $password = $_POST['password'];
     $remember = isset($_POST['remember']) ? true : false;
+    $recaptchaResponse = $_POST['g-recaptcha-response'] ?? '';
 
     if (empty($email) || empty($password)) {
         $response['message'] = 'Please fill in all fields';
+    } elseif (empty($recaptchaResponse)) {
+        $response['message'] = 'Please complete the reCAPTCHA';
     } else {
-        try {
-            $stmt = $pdo->prepare('SELECT id, name, password, role FROM users WHERE email = ?');
-            $stmt->execute([$email]);
-            $user = $stmt->fetch();
+        // Verify reCAPTCHA
+        $recaptchaVerify = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=" . RECAPTCHA_SECRET_KEY . "&response=" . $recaptchaResponse);
+        $recaptchaData = json_decode($recaptchaVerify);
 
-            if ($user && password_verify($password, $user['password'])) {
-                // Set session variables
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['role'] = $user['role'];
-                $_SESSION['name'] = $user['name'];
-                
-                // Update last access time
-                $updateStmt = $pdo->prepare('UPDATE users SET last_access = NOW() WHERE id = ?');
-                $updateStmt->execute([$user['id']]);
-                
-                // Handle remember me functionality
-                if ($remember) {
-                    $token = bin2hex(random_bytes(32));
-                    $expires = date('Y-m-d H:i:s', strtotime('+30 days'));
-                    
-                    // Store remember me token in database
-                    $stmt = $pdo->prepare('INSERT INTO remember_tokens (user_id, token, expires) VALUES (?, ?, ?)');
-                    $stmt->execute([$user['id'], $token, $expires]);
-                    
-                    // Set cookie
-                    setcookie('remember_token', $token, strtotime('+30 days'), '/', '', true, true);
-                }
+        if (!$recaptchaData->success) {
+            $response['message'] = 'reCAPTCHA verification failed';
+        } else {
+            try {
+                $stmt = $pdo->prepare('SELECT id, name, password, role FROM users WHERE email = ?');
+                $stmt->execute([$email]);
+                $user = $stmt->fetch();
 
-                // Immediate redirect based on role
-                if ($user['role'] === 'admin' || $user['role'] === 'teacher') {
-                    header('Location: admin/dashboard.php');
+                if ($user && password_verify($password, $user['password'])) {
+                    // Set session variables
+                    $_SESSION['user_id'] = $user['id'];
+                    $_SESSION['role'] = $user['role'];
+                    $_SESSION['name'] = $user['name'];
+                    
+                    // Update last access time
+                    $updateStmt = $pdo->prepare('UPDATE users SET last_access = NOW() WHERE id = ?');
+                    $updateStmt->execute([$user['id']]);
+                    
+                    // Handle remember me functionality
+                    if ($remember) {
+                        $token = bin2hex(random_bytes(32));
+                        $expires = date('Y-m-d H:i:s', strtotime('+30 days'));
+                        
+                        // Store remember me token in database
+                        $stmt = $pdo->prepare('INSERT INTO remember_tokens (user_id, token, expires) VALUES (?, ?, ?)');
+                        $stmt->execute([$user['id'], $token, $expires]);
+                        
+                        // Set cookie
+                        setcookie('remember_token', $token, strtotime('+30 days'), '/', '', true, true);
+                    }
+
+                    // Immediate redirect based on role
+                    if ($user['role'] === 'admin' || $user['role'] === 'teacher') {
+                        header('Location: admin/dashboard.php');
+                    } else {
+                        header('Location: student/dashboard.php');
+                    }
+                    exit;
                 } else {
-                    header('Location: student/dashboard.php');
+                    $response['message'] = 'Invalid email or password';
                 }
-                exit;
-            } else {
-                $response['message'] = 'Invalid email or password';
+            } catch (PDOException $e) {
+                error_log('Login Error: ' . $e->getMessage());
+                $response['message'] = 'Database error occurred. Please try again later.';
             }
-        } catch (PDOException $e) {
-            error_log('Login Error: ' . $e->getMessage());
-            $response['message'] = 'Database error occurred. Please try again later.';
         }
     }
 }
@@ -132,6 +147,8 @@ if (!$activeSession && $_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Education Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Add reCAPTCHA script in head section -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <!-- <script src="<?php 
     // echo htmlspecialchars($baseUrl ?? ''); 
     ?>asset/js/devtools-prevention.js"></script> -->
@@ -199,6 +216,11 @@ if (!$activeSession && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
 
+                <!-- Add reCAPTCHA widget before submit button -->
+                <div class="flex justify-center">
+                    <div class="g-recaptcha" data-sitekey="<?php echo RECAPTCHA_SITE_KEY; ?>"></div>
+                </div>
+
                 <div>
                     <button type="submit" id="submitBtn"
                         class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -230,18 +252,27 @@ function showLoadingState() {
     const buttonText = document.getElementById('buttonText');
     const loadingIcon = document.getElementById('loadingIcon');
     
-    // Disable button
+    // Check if reCAPTCHA is completed
+    if (grecaptcha.getResponse() === '') {
+        alert('Please complete the reCAPTCHA');
+        return false;
+    }
+    
+    // Disable button and show loading state
     button.disabled = true;
     button.classList.add('opacity-75', 'cursor-not-allowed');
-    
-    // Show loading state
     buttonText.textContent = 'Signing in...';
     loadingIcon.classList.remove('hidden');
+    return true;
 }
 
 // Only add event listeners if we're on the login form (not active session)
 <?php if (!$activeSession): ?>
-    document.getElementById('loginForm').addEventListener('submit', showLoadingState);
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        if (!showLoadingState()) {
+            e.preventDefault();
+        }
+    });
 
     // Add event listeners for Enter key press
     document.getElementById('email').addEventListener('keypress', function(e) {
