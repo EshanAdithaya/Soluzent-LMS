@@ -1,9 +1,26 @@
 <?php
+// Start of config.php - Session Configuration FIRST
+$session_path = '/';
+session_set_cookie_params([
+    'lifetime' => 3600,
+    'path' => $session_path,
+    'domain' => parse_url('https://plankton-app-us3aj.ondigitalocean.app', PHP_URL_HOST),
+    'secure' => true,
+    'httponly' => true,
+    'samesite' => 'Strict'
+]);
 
-// Move this to the very top of config.php, before any output or redirects
+ini_set('session.cookie_httponly', 1);
+ini_set('session.use_only_cookies', 1);
+ini_set('session.cookie_secure', 1);
+ini_set('session.cookie_samesite', 'Strict');
+ini_set('session.gc_maxlifetime', 3600);
+
+// Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
 // Error Reporting
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
@@ -21,15 +38,8 @@ define('PHP_SELF', 'https://plankton-app-us3aj.ondigitalocean.app');
 
 // Application Settings
 define('APP_NAME', 'EduPortal');
-define('APP_URL', 'https://plankton-app-us3aj.ondigitalocean.app'); // Change to your live domain
+define('APP_URL', 'https://plankton-app-us3aj.ondigitalocean.app');
 define('ADMIN_EMAIL', 'admin@your-domain.com');
-
-// Session Configuration
-ini_set('session.cookie_httponly', 1);
-ini_set('session.use_only_cookies', 1);
-ini_set('session.cookie_secure', 1);   // Set to 1 in production (HTTPS)
-ini_set('session.cookie_samesite', 'Strict');
-ini_set('session.gc_maxlifetime', 3600); // Session timeout in seconds (1 hour)
 
 // File Upload Settings
 define('MAX_FILE_SIZE', 10 * 1024 * 1024);  // 10MB in bytes
@@ -42,18 +52,6 @@ define('ALLOWED_FILE_TYPES', [
     'png'  => 'image/png'
 ]);
 define('UPLOAD_PATH', __DIR__ . '/../uploads');
-
-
-// Add this at the top of your config.php
-$session_path = '/';  // Or the specific path where your app is installed
-session_set_cookie_params([
-    'lifetime' => 3600,
-    'path' => $session_path,
-    'domain' => parse_url(APP_URL, PHP_URL_HOST),
-    'secure' => true,
-    'httponly' => true,
-    'samesite' => 'Strict'
-]);
 
 // Email Configuration (if needed)
 define('SMTP_HOST', 'smtp.example.com');
@@ -82,15 +80,12 @@ function is_valid_email($email) {
 }
 
 function redirect($path) {
-    function redirect($path) {
-        $url = APP_URL;
-        if (!empty($path)) {
-            $url .= '/' . ltrim($path, '/');
-        }
-        header("Location: " . $url);
-        exit;
+    $url = APP_URL;
+    if (!empty($path)) {
+        $url .= '/' . ltrim($path, '/');
+    }
+    header("Location: " . $url);
     exit;
-}
 }
 
 function is_ajax_request() {
@@ -123,27 +118,7 @@ function is_logged_in() {
     return isset($_SESSION['user_id']);
 }
 
-// Check if user is admin
-// function is_admin() {
-//     return isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
-// }
-
-// function is_teacher() {
-//     return isset($_SESSION['role']) && ($_SESSION['role'] === 'teacher' || $_SESSION['role'] === 'admin');
-// }
-
-
 // Create upload directory if it doesn't exist
 if (!file_exists(UPLOAD_PATH)) {
     mkdir(UPLOAD_PATH, 0755, true);
-}
-
-
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-// Create upload directory if it doesn't exist
-if (!file_exists(UPLOAD_PATH)) {
-    mkdir(UPLOAD_PATH, 0755, true);
-}
+} 
