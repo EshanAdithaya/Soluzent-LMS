@@ -3,8 +3,8 @@
 
 // Simple page and role detection
 $current_page = basename($_SERVER['PHP_SELF']);
-$is_teachertrue = isset($_SESSION['role']) && $_SESSION['role'] !== 'teacher';
-$portal_title = $is_teachertrue ? 'EduPortal Teacher' : 'EduPortal Admin';
+$is_teacher = isset($_SESSION['role']) && $_SESSION['role'] !== 'teacher';
+$portal_title = $is_teacher ? 'EduPortal Teacher' : 'EduPortal Admin';
 
 // Determine base path for links
 $base_path = '';

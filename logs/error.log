@@ -52,3 +52,4 @@ Stack trace:
 #1 C:\xampp\htdocs\nimru-Web\profile.php(187): include_once('C:\\xampp\\htdocs...')
 #2 {main}
   thrown in C:\xampp\htdocs\nimru-Web\admin\adminSession.php on line 3
+[06-Dec-2024 07:07:29 UTC] User data loaded successfully
