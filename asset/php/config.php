@@ -107,7 +107,7 @@ function is_admin() {
 }
 
 function is_teacher() {
-    return isset($_SESSION['role']) && $_SESSION['role'] === 'teacher';
+    return isset($_SESSION['role']) && $_SESSION['role'] === 'teacher' && $_SESSION['role'] === 'admin';
 }
 
 // Initialize session if not already started
