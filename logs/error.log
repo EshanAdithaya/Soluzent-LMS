@@ -38,3 +38,17 @@
 [06-Dec-2024 03:03:27 UTC] User data loaded successfully
 [06-Dec-2024 03:03:27 UTC] PHP Warning:  Undefined variable $current_page in C:\xampp\htdocs\nimru-Web\student\student-header.php on line 3
 [06-Dec-2024 03:03:50 UTC] User data loaded successfully
+[06-Dec-2024 07:00:22 UTC] PHP Warning:  require_once(../asset/php/config.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\nimru-Web\admin\adminSession.php on line 3
+[06-Dec-2024 07:00:22 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../asset/php/config.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\nimru-Web\admin\adminSession.php:3
+Stack trace:
+#0 C:\xampp\htdocs\nimru-Web\admin\admin-header.php(2): include_once()
+#1 C:\xampp\htdocs\nimru-Web\profile.php(187): include_once('C:\\xampp\\htdocs...')
+#2 {main}
+  thrown in C:\xampp\htdocs\nimru-Web\admin\adminSession.php on line 3
+[06-Dec-2024 07:00:27 UTC] PHP Warning:  require_once(../asset/php/config.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\nimru-Web\admin\adminSession.php on line 3
+[06-Dec-2024 07:00:27 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '../asset/php/config.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\nimru-Web\admin\adminSession.php:3
+Stack trace:
+#0 C:\xampp\htdocs\nimru-Web\admin\admin-header.php(2): include_once()
+#1 C:\xampp\htdocs\nimru-Web\profile.php(187): include_once('C:\\xampp\\htdocs...')
+#2 {main}
+  thrown in C:\xampp\htdocs\nimru-Web\admin\adminSession.php on line 3

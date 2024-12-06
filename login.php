@@ -1,114 +1,126 @@
 <?php
-// session_start();
 require_once 'asset/php/config.php';
 require_once 'asset/php/db.php';
 
-// Check for active session
+// Initialize variables
 $activeSession = false;
 $currentUser = '';
+$response = ['success' => false, 'message' => ''];
+
+// First check for remember me cookie
+if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
+    try {
+        $stmt = $pdo->prepare('
+            SELECT u.id, u.name, u.role 
+            FROM users u 
+            JOIN remember_tokens rt ON u.id = rt.user_id 
+            WHERE rt.token = ? AND rt.expires > NOW()
+        ');
+        $stmt->execute([$_COOKIE['remember_token']]);
+        $user = $stmt->fetch();
+
+        if ($user) {
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['role'] = $user['role'];
+            $_SESSION['name'] = $user['name'];
+
+            // Update last access
+            $updateStmt = $pdo->prepare('UPDATE users SET last_access = NOW() WHERE id = ?');
+            $updateStmt->execute([$user['id']]);
+
+            // Redirect to appropriate dashboard
+            if ($user['role'] === 'admin' || $user['role'] === 'teacher') {
+                header('Location: admin/dashboard.php');
+            } else {
+                header('Location: student/dashboard.php');
+            }
+            exit;
+        }
+    } catch (PDOException $e) {
+        error_log('Remember Token Error: ' . $e->getMessage());
+    }
+}
+
+// Then check for existing session
 if (isset($_SESSION['user_id'])) {
     $activeSession = true;
     $currentUser = $_SESSION['name'];
     
-    // Only process logout if requested
+    // Handle logout request
     if (isset($_POST['logout'])) {
-        session_destroy();
-        // Clear remember me cookie if it exists
+        // Remove remember token from database and cookie
         if (isset($_COOKIE['remember_token'])) {
-            setcookie('remember_token', '', time() - 3600, '/');
+            try {
+                $stmt = $pdo->prepare('DELETE FROM remember_tokens WHERE token = ?');
+                $stmt->execute([$_COOKIE['remember_token']]);
+                setcookie('remember_token', '', time() - 3600, '/');
+            } catch (PDOException $e) {
+                error_log('Logout Error: ' . $e->getMessage());
+            }
         }
+        
+        session_destroy();
         header('Location: login.php');
+        exit;
+    }
+    
+    // If session exists and no logout request, redirect to appropriate dashboard
+    if ($_SERVER['PHP_SELF'] === '/login.php') {
+        header('Location: ' . ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'teacher' ? 'admin/dashboard.php' : 'student/dashboard.php'));
         exit;
     }
 }
 
-// Only process login if no active session
-if (!$activeSession) {
-    $response = ['success' => false, 'message' => ''];
+// Finally process login attempt if no session exists
+if (!$activeSession && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
+    $password = $_POST['password'];
+    $remember = isset($_POST['remember']) ? true : false;
 
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
-        $password = $_POST['password'];
-        $remember = isset($_POST['remember']) ? true : false;
-
-        if (empty($email) || empty($password)) {
-            $response['message'] = 'Please fill in all fields';
-        } else {
-            try {
-                $stmt = $pdo->prepare('SELECT id, name, password, role FROM users WHERE email = ?');
-                $stmt->execute([$email]);
-                $user = $stmt->fetch();
-
-                if ($user && password_verify($password, $user['password'])) {
-                    // Set session variables
-                    $_SESSION['user_id'] = $user['id'];
-                    $_SESSION['role'] = $user['role'];
-                    $_SESSION['name'] = $user['name'];
-                    
-                    // Update last access time BEFORE redirect
-                    $updateStmt = $pdo->prepare('UPDATE users SET last_access = NOW() WHERE id = ?');
-                    $updateStmt->execute([$user['id']]);
-                    
-                    // Handle remember me functionality
-                    if ($remember) {
-                        $token = bin2hex(random_bytes(32));
-                        $expires = date('Y-m-d H:i:s', strtotime('+30 days'));
-                        
-                        // Store remember me token in database
-                        $stmt = $pdo->prepare('INSERT INTO remember_tokens (user_id, token, expires) VALUES (?, ?, ?)');
-                        $stmt->execute([$user['id'], $token, $expires]);
-                        
-                        // Set cookie
-                        setcookie('remember_token', $token, strtotime('+30 days'), '/', '', true, true);
-                    }
-
-                    // Set success message before redirect
-                    $_SESSION['login_success'] = true;
-
-                    // Redirect based on role
-                    if ($user['role'] === 'admin' || $user['role'] === 'teacher') {
-                        header('Location: admin/dashboard.php');
-                    } else {
-                        header('Location: student/dashboard.php');
-                    }
-                    exit;
-                } else {
-                    $response['message'] = 'Invalid email or password';
-                }
-            } catch (PDOException $e) {
-                error_log('Login Error: ' . $e->getMessage());
-                $response['message'] = 'Database error occurred. Please try again later.';
-            }
-        }
-    }
-
-    // Check for remember me cookie
-    if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
+    if (empty($email) || empty($password)) {
+        $response['message'] = 'Please fill in all fields';
+    } else {
         try {
-            $stmt = $pdo->prepare('
-                SELECT u.id, u.name, u.role 
-                FROM users u 
-                JOIN remember_tokens rt ON u.id = rt.user_id 
-                WHERE rt.token = ? AND rt.expires > NOW()
-            ');
-            $stmt->execute([$_COOKIE['remember_token']]);
+            $stmt = $pdo->prepare('SELECT id, name, password, role FROM users WHERE email = ?');
+            $stmt->execute([$email]);
             $user = $stmt->fetch();
 
-            if ($user) {
+            if ($user && password_verify($password, $user['password'])) {
+                // Set session variables
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['role'] = $user['role'];
                 $_SESSION['name'] = $user['name'];
-
-                // Update last access
+                
+                // Update last access time
                 $updateStmt = $pdo->prepare('UPDATE users SET last_access = NOW() WHERE id = ?');
                 $updateStmt->execute([$user['id']]);
+                
+                // Handle remember me functionality
+                if ($remember) {
+                    $token = bin2hex(random_bytes(32));
+                    $expires = date('Y-m-d H:i:s', strtotime('+30 days'));
+                    
+                    // Store remember me token in database
+                    $stmt = $pdo->prepare('INSERT INTO remember_tokens (user_id, token, expires) VALUES (?, ?, ?)');
+                    $stmt->execute([$user['id'], $token, $expires]);
+                    
+                    // Set cookie
+                    setcookie('remember_token', $token, strtotime('+30 days'), '/', '', true, true);
+                }
 
-                // Redirect to appropriate dashboard
-                header('Location: ' . (($user['role'] === 'admin' || $user['role'] === 'teacher') ? 'admin/dashboard.php' : 'student/dashboard.php'));
+                // Immediate redirect based on role
+                if ($user['role'] === 'admin' || $user['role'] === 'teacher') {
+                    header('Location: admin/dashboard.php');
+                } else {
+                    header('Location: student/dashboard.php');
+                }
                 exit;
+            } else {
+                $response['message'] = 'Invalid email or password';
             }
         } catch (PDOException $e) {
-            error_log('Remember Token Error: ' . $e->getMessage());
+            error_log('Login Error: ' . $e->getMessage());
+            $response['message'] = 'Database error occurred. Please try again later.';
         }
     }
 }
