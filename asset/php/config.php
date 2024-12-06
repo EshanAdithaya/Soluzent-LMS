@@ -1,6 +1,9 @@
 <?php
-// includes/config.php
 
+// Move this to the very top of config.php, before any output or redirects
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 // Error Reporting
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
@@ -40,6 +43,18 @@ define('ALLOWED_FILE_TYPES', [
 ]);
 define('UPLOAD_PATH', __DIR__ . '/../uploads');
 
+
+// Add this at the top of your config.php
+$session_path = '/';  // Or the specific path where your app is installed
+session_set_cookie_params([
+    'lifetime' => 3600,
+    'path' => $session_path,
+    'domain' => parse_url(APP_URL, PHP_URL_HOST),
+    'secure' => true,
+    'httponly' => true,
+    'samesite' => 'Strict'
+]);
+
 // Email Configuration (if needed)
 define('SMTP_HOST', 'smtp.example.com');
 define('SMTP_PORT', 587);
@@ -67,7 +82,13 @@ function is_valid_email($email) {
 }
 
 function redirect($path) {
-    header("Location: " . APP_URL . "/" . $path);
+    function redirect($path) {
+        $url = APP_URL;
+        if (!empty($path)) {
+            $url .= '/' . ltrim($path, '/');
+        }
+        header("Location: " . $url);
+        exit;
     exit;
 }
 
@@ -110,10 +131,6 @@ function is_logged_in() {
 //     return isset($_SESSION['role']) && ($_SESSION['role'] === 'teacher' || $_SESSION['role'] === 'admin');
 // }
 
-// Initialize session if not already started
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 
 // Create upload directory if it doesn't exist
 if (!file_exists(UPLOAD_PATH)) {
