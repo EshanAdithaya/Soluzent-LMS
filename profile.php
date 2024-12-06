@@ -8,6 +8,7 @@ session_start([
 
 require_once __DIR__ . '/asset/php/config.php';
 require_once __DIR__ . '/asset/php/db.php';
+require_once 'student/session.php';
 
 // Enable error reporting with logging
 ini_set('display_errors', 0);
