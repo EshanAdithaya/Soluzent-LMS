@@ -20,7 +20,7 @@ if (strpos($current_page, 'profile.php') !== false) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - EduPortal</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="../asset/js/devtools-prevention.js"></script>
+    <!-- <script src="../asset/js/devtools-prevention.js"></script> -->
 </head>
 <body class="bg-gray-50">
     <nav class="bg-white shadow-lg">
