@@ -14,7 +14,7 @@ if (!isset($_SESSION['user_id'])) {
 
 if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'teacher')) {
     echo "<script>alert('Access denied. Insufficient privileges.');</script>";
-    echo "<script>window.location.href = '" . APP_URL . "/login.php';</script>";
+    // echo "<script>window.location.href = '" . APP_URL . "/login.php';</script>";
     header("Location: " . APP_URL . "/login.php");
     exit;
 }
