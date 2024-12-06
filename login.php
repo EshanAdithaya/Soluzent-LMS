@@ -209,21 +209,24 @@ if (!$activeSession) {
         </div>
     </div>
     <?php include_once 'footer.php'; ?>
-    <script>
-    function showLoadingState() {
-        const button = document.getElementById('submitBtn');
-        const buttonText = document.getElementById('buttonText');
-        const loadingIcon = document.getElementById('loadingIcon');
-        
-        // Disable button
-        button.disabled = true;
-        button.classList.add('opacity-75', 'cursor-not-allowed');
-        
-        // Show loading state
-        buttonText.textContent = 'Signing in...';
-        loadingIcon.classList.remove('hidden');
-    }
+    <!-- Modify your script section at the bottom of login.php -->
+<script>
+function showLoadingState() {
+    const button = document.getElementById('submitBtn');
+    const buttonText = document.getElementById('buttonText');
+    const loadingIcon = document.getElementById('loadingIcon');
+    
+    // Disable button
+    button.disabled = true;
+    button.classList.add('opacity-75', 'cursor-not-allowed');
+    
+    // Show loading state
+    buttonText.textContent = 'Signing in...';
+    loadingIcon.classList.remove('hidden');
+}
 
+// Only add event listeners if we're on the login form (not active session)
+<?php if (!$activeSession): ?>
     document.getElementById('loginForm').addEventListener('submit', showLoadingState);
 
     // Add event listeners for Enter key press
@@ -242,6 +245,7 @@ if (!$activeSession) {
             document.getElementById('loginForm').submit();
         }
     });
-    </script>
+<?php endif; ?>
+</script>
 </body>
 </html>
