@@ -14,6 +14,7 @@ define('DB_USER', 'doadmin');
 define('DB_PASS', 'AVNS_l3SW8eljPIvmmGNUCFK');
 define('DB_CHARSET', 'utf8mb4');
 define('DB_PORT', 25060);
+define('PHP_SELF', 'https://plankton-app-us3aj.ondigitalocean.app');
 
 // Application Settings
 define('APP_NAME', 'EduPortal');
