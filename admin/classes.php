@@ -2,6 +2,7 @@
 require_once '../asset/php/config.php';
 require_once '../asset/php/db.php';
  include_once 'admin-header.php';
+ require_once 'adminSession.php';
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';

@@ -1,7 +1,7 @@
 <?php
 require_once '../asset/php/config.php';
 require_once '../asset/php/db.php';
-
+require_once 'adminSession.php';
 
 // Handle application approval/rejection/deletion
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../asset/php/config.php';
 require_once '../asset/php/db.php';
-
+require_once 'adminSession.php';
 
 $isTeacher = $_SESSION['role'] === 'teacher';
 
