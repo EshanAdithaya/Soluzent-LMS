@@ -1,8 +1,7 @@
 <?php
 require_once '../asset/php/config.php';
 require_once '../asset/php/db.php';
-session_start();
-
+ include_once 'admin-header.php';
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
@@ -169,7 +168,7 @@ $students = $stmt->fetchAll();
 </head>
 <body class="bg-gray-50">
     <!-- Navigation -->
-   <?php include_once 'admin-header.php';?>
+   
 
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
