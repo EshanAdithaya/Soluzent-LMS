@@ -1,12 +1,13 @@
 <?php
 // session_start();
+require_once __DIR__ . 'asset/php/config.php';
 
 class Navigation {
     private $currentPage;
     private $menuItems;
 
     public function __construct() {
-        $this->currentPage = basename($_SERVER['APP_URL']);
+        $this->currentPage = basename(['APP_URL']);
         $this->setupMenuItems();
     }
 
