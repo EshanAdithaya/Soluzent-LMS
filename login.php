@@ -1,7 +1,7 @@
 <?php
 require_once 'asset/php/config.php';
 require_once 'asset/php/db.php';
-require_once __DIR__ . 'asset/php/config.php';
+
 
 // Add this at the top with your other constants
 define('RECAPTCHA_SITE_KEY', '6LfS-pMqAAAAABIZAGYVYyCZf2UwDbtehvEsYYti');
