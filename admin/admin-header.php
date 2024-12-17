@@ -2,7 +2,7 @@
 // include_once 'adminSession.php';
 
 // Simple page and role detection
-$current_page = basename($_SERVER['PHP_SELF']);
+$current_page = basename($_SERVER['APP_URL']);
 $is_teacher = isset($_SESSION['role']) && $_SESSION['role'] !== 'teacher';
 $portal_title = $is_teacher ? 'EduPortal Teacher' : 'EduPortal Admin';
 

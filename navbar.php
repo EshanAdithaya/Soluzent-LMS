@@ -6,7 +6,7 @@ class Navigation {
     private $menuItems;
 
     public function __construct() {
-        $this->currentPage = basename($_SERVER['PHP_SELF']);
+        $this->currentPage = basename($_SERVER['APP_URL']);
         $this->setupMenuItems();
     }
 

@@ -5,7 +5,7 @@ require_once 'adminSession.php';
 
 $title = isset($_SESSION['role']) && $_SESSION['role'] === 'teacher' ? 'Teacher Dashboard' : 'Admin Dashboard';
 $isTeacher = isset($_SESSION['role']) && $_SESSION['role'] === 'teacher';
-$is_dashboard_page = basename($_SERVER['PHP_SELF']) === 'dashboard.php';
+$is_dashboard_page = basename($_SERVER['APP_URL']) === 'dashboard.php';
 
 try {
     if ($isTeacher) {

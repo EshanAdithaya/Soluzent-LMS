@@ -153,7 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['error'] = $e->getMessage();
     }
 
-    header('Location: ' . $_SERVER['PHP_SELF']);
+    header('Location: ' . $_SERVER['APP_URL']);
     exit;
 }
 
