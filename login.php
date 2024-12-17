@@ -70,14 +70,14 @@ if (isset($_SESSION['user_id'])) {
     }
     
     // If session exists and no logout request, redirect to appropriate dashboard
-    if (['APP_URL'] === '/login.php') {
+    if ($_SERVER['APP_URL'] === '/login.php') {
         header('Location: ' . ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'teacher' ? 'admin/dashboard.php' : 'student/dashboard.php'));
         exit;
     }
 }
 
 // Finally process login attempt if no session exists
-if (!$activeSession && ['REQUEST_METHOD'] === 'POST') {
+if (!$activeSession && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
     $password = $_POST['password'];
     $remember = isset($_POST['remember']) ? true : false;
