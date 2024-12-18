@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once 'asset/php/config.php';
 require_once 'asset/php/db.php';
 
@@ -70,7 +71,7 @@ if (isset($_SESSION['user_id'])) {
     }
     
     // If session exists and no logout request, redirect to appropriate dashboard
-    if ($_SERVER['APP_URL'] === '/login.php') {
+    if ($_SERVER['REQUEST_URI'] === '/login.php') {
         header('Location: ' . ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'teacher' ? 'admin/dashboard.php' : 'student/dashboard.php'));
         exit;
     }
