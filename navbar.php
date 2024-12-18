@@ -21,7 +21,7 @@ $this->currentPage = basename($_SERVER['REQUEST_URI']); // Use REQUEST_URI as a 
             ],
             'auth' => [
                 'student' => [
-                    ['student/dashboard.php', 'Dashboard'],
+                    ['student/Dashboard.php', 'Dashboard'],
                     ['profile.php', 'Profile'],
                 ],
                 'admin' => [

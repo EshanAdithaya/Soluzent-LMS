@@ -72,7 +72,7 @@ if (isset($_SESSION['user_id'])) {
     
     // If session exists and no logout request, redirect to appropriate dashboard
     if ($_SERVER['REQUEST_URI'] === '/login.php') {
-        header('Location: ' . ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'teacher' ? 'admin/dashboard.php' : 'student/dashboard.php'));
+        header('Location: ' . ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'teacher' ? 'admin/dashboard.php' : 'student/Dashboard.php'));
         exit;
     }
 }
@@ -129,7 +129,7 @@ if (!$activeSession && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($user['role'] === 'admin' || $user['role'] === 'teacher') {
                         header('Location: admin/dashboard.php');
                     } else {
-                        header('Location: student/dashboard.php');
+                        header('Location: student/Dashboard.php');
                     }
                     exit;
                 } else {

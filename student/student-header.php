@@ -12,12 +12,12 @@ $current_page = basename($_SERVER['REQUEST_URI']); // Use REQUEST_URI as a fallb
                 <div class="flex items-center">
                     <?php
                     $current_page = basename($_SERVER['REQUEST_URI']);
-                    if ($current_page === 'dashboard.php'): ?>
+                    if ($current_page === 'Dashboard.php'): ?>
                         <h1 class="text-xl font-bold text-gray-900">Student Dashboard</h1>
                     <?php elseif ($current_page === 'profile.php'): ?>
-                        <a href="student/dashboard.php" class="text-xl font-bold text-gray-900 hover:text-gray-700">Student Dashboard</a>
+                        <a href="student/Dashboard.php" class="text-xl font-bold text-gray-900 hover:text-gray-700">Student Dashboard</a>
                     <?php else: ?>
-                        <a href="dashboard.php" class="text-xl font-bold text-gray-900 hover:text-gray-700">Student Dashboard</a>
+                        <a href="Dashboard.php" class="text-xl font-bold text-gray-900 hover:text-gray-700">Student Dashboard</a>
                     <?php endif; ?>
 
                 </div>

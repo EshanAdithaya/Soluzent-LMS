@@ -13,7 +13,7 @@ if ($class_id <= 0) {
             <div class="text-center">
                 <h1 class="text-4xl font-bold text-gray-800 mb-4">Invalid Class</h1>
                 <p class="text-gray-600 mb-4">The class you are looking for is not available.</p>
-                <a href="dashboard.php" class="text-blue-500 hover:text-blue-600">Return to Dashboard</a>
+                <a href="Dashboard.php" class="text-blue-500 hover:text-blue-600">Return to Dashboard</a>
             </div>
         </div>
     ');
@@ -28,7 +28,7 @@ if (!$stmt->fetch()) {
             <div class="text-center">
                 <h1 class="text-4xl font-bold text-gray-800 mb-4">Class Not Found</h1>
                 <p class="text-gray-600 mb-4">The class you are looking for does not exist.</p>
-                <a href="dashboard.php" class="text-blue-500 hover:text-blue-600">Return to Dashboard</a>
+                <a href="Dashboard.php" class="text-blue-500 hover:text-blue-600">Return to Dashboard</a>
             </div>
         </div>
     ');
@@ -47,7 +47,7 @@ if (!$stmt->fetch()) {
             <div class="text-center">
                 <h1 class="text-4xl font-bold text-gray-800 mb-4">Not Permitted</h1>
                 <p class="text-gray-600 mb-4">You are not enrolled in this class.</p>
-                <a href="dashboard.php" class="text-blue-500 hover:text-blue-600">Return to Dashboard</a>
+                <a href="Dashboard.php" class="text-blue-500 hover:text-blue-600">Return to Dashboard</a>
             </div>
         </div>
     ');

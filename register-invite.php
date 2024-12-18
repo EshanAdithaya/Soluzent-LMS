@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $pdo->commit();
-        header('Location: student/dashboard.php');
+        header('Location: student/Dashboard.php');
         exit;
 
     } catch (Exception $e) {
