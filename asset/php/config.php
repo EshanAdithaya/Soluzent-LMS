@@ -6,7 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
         'lifetime' => 3600,
         'path' => $session_path,
         // 'domain' => parse_url('https://plankton-app-us3aj.ondigitalocean.app', PHP_URL_HOST),
-        'domain' => parse_url('http://161.35.63.178', PHP_URL_HOST),
+        'domain' => parse_url('http://161.35.63.178/nimru-Web', PHP_URL_HOST),
         'secure' => true,
         'httponly' => true,
         'samesite' => 'Strict'
@@ -35,7 +35,7 @@ define('DB_PASS', 'AVNS_l3SW8eljPIvmmGNUCFK');
 define('DB_CHARSET', 'utf8mb4');
 define('DB_PORT', 25060);
 // define('APP_URL', 'https://plankton-app-us3aj.ondigitalocean.app');
-define('APP_URL', 'http://161.35.63.178');
+define('APP_URL', 'http://161.35.63.178/nimru-Web');
 
 // Application Settings
 define('APP_NAME', 'EduPortal');
