@@ -85,16 +85,17 @@ if (!$activeSession && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($email) || empty($password)) {
         $response['message'] = 'Please fill in all fields';
-    } elseif (empty($recaptchaResponse)) {
-        $response['message'] = 'Please complete the reCAPTCHA';
-    } else {
+    // } elseif (empty($recaptchaResponse)) {
+    //     $response['message'] = 'Please complete the reCAPTCHA';
+    // } 
+    }else {
         // Verify reCAPTCHA
         $recaptchaVerify = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=" . RECAPTCHA_SECRET_KEY . "&response=" . $recaptchaResponse);
         $recaptchaData = json_decode($recaptchaVerify);
 
-        if (!$recaptchaData->success) {
-            $response['message'] = 'reCAPTCHA verification failed';
-        } else {
+        // if (!$recaptchaData->success) {
+        //     $response['message'] = 'reCAPTCHA verification failed';
+        // } else {
             try {
                 $stmt = $pdo->prepare('SELECT id, name, password, role FROM users WHERE email = ?');
                 $stmt->execute([$email]);
@@ -139,7 +140,7 @@ if (!$activeSession && $_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
-}
+// }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -254,10 +255,10 @@ function showLoadingState() {
     const loadingIcon = document.getElementById('loadingIcon');
     
     // Check if reCAPTCHA is completed
-    if (grecaptcha.getResponse() === '') {
-        alert('Please complete the reCAPTCHA');
-        return false;
-    }
+    // if (grecaptcha.getResponse() === '') {
+    //     alert('Please complete the reCAPTCHA');
+    //     return false;
+    // }
     
     // Disable button and show loading state
     button.disabled = true;
