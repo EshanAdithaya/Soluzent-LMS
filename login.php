@@ -38,7 +38,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
             if ($user['role'] === 'admin' || $user['role'] === 'teacher') {
                 header('Location: admin/dashboard.php');
             } else {
-                header('Location: student/dashboard.php');
+                header('Location: student/Dashboard.php');
             }
             exit;
         }
