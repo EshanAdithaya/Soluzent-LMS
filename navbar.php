@@ -6,7 +6,7 @@ class Navigation {
     private $menuItems;
 
     public function __construct() {
-        $this->currentPage = basename($_SERVER['APP_URL']);
+$this->currentPage = basename($_SERVER['REQUEST_URI']); // Use REQUEST_URI as a fallback
         $this->setupMenuItems();
     }
 
