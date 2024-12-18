@@ -12,7 +12,15 @@ if (isset($_COOKIE[session_name()])) {
 }
 
 // Destroy the session
+// Logout/Session Destruction
+// session_start();
 session_destroy();
+session_unset();
+// session_regenerate_id(true); // This creates a new session ID
+
+// When logging in again
+// session_start();
+// Rest of your login logic
 
 // Determine if it's an AJAX request
 if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
