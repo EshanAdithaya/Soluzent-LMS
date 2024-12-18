@@ -2,8 +2,7 @@
 // echo htmlspecialchars($baseUrl ?? ''); 
 ?>../asset/js/devtools-prevention.js"></script> -->
 <?php 
-$current_page = basename($_SERVER['APP_URL']);
-$is_profile_page = ($current_page === 'profile.php');
+$current_page = basename($_SERVER['REQUEST_URI']); // Use REQUEST_URI as a fallback
 
 ?>
 <!-- Navigation -->
@@ -12,7 +11,7 @@ $is_profile_page = ($current_page === 'profile.php');
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
                     <?php
-                    $current_page = basename($_SERVER['APP_URL']);
+                    $current_page = basename($_SERVER['REQUEST_URI']);
                     if ($current_page === 'dashboard.php'): ?>
                         <h1 class="text-xl font-bold text-gray-900">Student Dashboard</h1>
                     <?php elseif ($current_page === 'profile.php'): ?>

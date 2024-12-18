@@ -53,3 +53,32 @@ Stack trace:
 #2 {main}
   thrown in C:\xampp\htdocs\nimru-Web\admin\adminSession.php on line 3
 [06-Dec-2024 07:07:29 UTC] User data loaded successfully
+[18-Dec-2024 03:13:14 UTC] User data loaded successfully
+[18-Dec-2024 03:13:14 UTC] PHP Warning:  Undefined array key "APP_URL" in C:\xampp\htdocs\github\nimru-Web\student\student-header.php on line 5
+[18-Dec-2024 03:13:14 UTC] PHP Deprecated:  basename(): Passing null to parameter #1 ($path) of type string is deprecated in C:\xampp\htdocs\github\nimru-Web\student\student-header.php on line 5
+[18-Dec-2024 03:13:14 UTC] PHP Warning:  Undefined array key "APP_URL" in C:\xampp\htdocs\github\nimru-Web\student\student-header.php on line 15
+[18-Dec-2024 03:13:14 UTC] PHP Deprecated:  basename(): Passing null to parameter #1 ($path) of type string is deprecated in C:\xampp\htdocs\github\nimru-Web\student\student-header.php on line 15
+[18-Dec-2024 03:18:30 UTC] User data loaded successfully
+[18-Dec-2024 03:18:30 UTC] PHP Warning:  Undefined array key "APP_URL" in C:\xampp\htdocs\github\nimru-Web\student\student-header.php on line 5
+[18-Dec-2024 03:18:30 UTC] PHP Deprecated:  basename(): Passing null to parameter #1 ($path) of type string is deprecated in C:\xampp\htdocs\github\nimru-Web\student\student-header.php on line 5
+[18-Dec-2024 03:18:30 UTC] PHP Warning:  Undefined array key "APP_URL" in C:\xampp\htdocs\github\nimru-Web\student\student-header.php on line 16
+[18-Dec-2024 03:18:30 UTC] PHP Deprecated:  basename(): Passing null to parameter #1 ($path) of type string is deprecated in C:\xampp\htdocs\github\nimru-Web\student\student-header.php on line 16
+[18-Dec-2024 03:18:38 UTC] User data loaded successfully
+[18-Dec-2024 03:18:38 UTC] PHP Warning:  Undefined array key "APP_URL" in C:\xampp\htdocs\github\nimru-Web\student\student-header.php on line 5
+[18-Dec-2024 03:18:38 UTC] PHP Deprecated:  basename(): Passing null to parameter #1 ($path) of type string is deprecated in C:\xampp\htdocs\github\nimru-Web\student\student-header.php on line 5
+[18-Dec-2024 03:18:38 UTC] PHP Warning:  Undefined array key "APP_URL" in C:\xampp\htdocs\github\nimru-Web\student\student-header.php on line 16
+[18-Dec-2024 03:18:38 UTC] PHP Deprecated:  basename(): Passing null to parameter #1 ($path) of type string is deprecated in C:\xampp\htdocs\github\nimru-Web\student\student-header.php on line 16
+[18-Dec-2024 03:19:14 UTC] User data loaded successfully
+[18-Dec-2024 03:19:14 UTC] PHP Warning:  Undefined variable $current_page in C:\xampp\htdocs\github\nimru-Web\student\student-header.php on line 5
+[18-Dec-2024 03:19:53 UTC] User data loaded successfully
+[18-Dec-2024 03:19:53 UTC] PHP Warning:  Undefined variable $is_profile_page in C:\xampp\htdocs\github\nimru-Web\student\student-header.php on line 33
+[18-Dec-2024 03:19:57 UTC] PHP Warning:  Undefined array key "APP_URL" in C:\xampp\htdocs\github\nimru-Web\admin\admin-header.php on line 5
+[18-Dec-2024 03:19:57 UTC] PHP Deprecated:  basename(): Passing null to parameter #1 ($path) of type string is deprecated in C:\xampp\htdocs\github\nimru-Web\admin\admin-header.php on line 5
+[18-Dec-2024 03:20:05 UTC] PHP Warning:  Undefined array key "APP_URL" in C:\xampp\htdocs\github\nimru-Web\admin\admin-header.php on line 5
+[18-Dec-2024 03:20:05 UTC] PHP Deprecated:  basename(): Passing null to parameter #1 ($path) of type string is deprecated in C:\xampp\htdocs\github\nimru-Web\admin\admin-header.php on line 5
+[18-Dec-2024 03:20:10 UTC] PHP Warning:  Undefined array key "APP_URL" in C:\xampp\htdocs\github\nimru-Web\admin\admin-header.php on line 5
+[18-Dec-2024 03:20:10 UTC] PHP Deprecated:  basename(): Passing null to parameter #1 ($path) of type string is deprecated in C:\xampp\htdocs\github\nimru-Web\admin\admin-header.php on line 5
+[18-Dec-2024 03:20:23 UTC] PHP Warning:  Undefined array key "APP_URL" in C:\xampp\htdocs\github\nimru-Web\admin\admin-header.php on line 5
+[18-Dec-2024 03:20:23 UTC] PHP Deprecated:  basename(): Passing null to parameter #1 ($path) of type string is deprecated in C:\xampp\htdocs\github\nimru-Web\admin\admin-header.php on line 5
+[18-Dec-2024 03:22:22 UTC] User data loaded successfully
+[18-Dec-2024 03:22:22 UTC] PHP Warning:  Undefined variable $is_profile_page in C:\xampp\htdocs\github\nimru-Web\student\student-header.php on line 33
