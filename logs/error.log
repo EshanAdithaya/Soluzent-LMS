@@ -102,3 +102,5 @@ Stack trace:
 [19-Dec-2024 04:26:07 UTC] PHP Warning:  Undefined variable $is_profile_page in C:\xampp\htdocs\nimru-Web\student\student-header.php on line 37
 [19-Dec-2024 04:26:31 UTC] User data loaded successfully
 [19-Dec-2024 04:26:31 UTC] PHP Warning:  Undefined variable $is_profile_page in C:\xampp\htdocs\nimru-Web\student\student-header.php on line 37
+[19-Dec-2024 04:35:37 UTC] User data loaded successfully
+[19-Dec-2024 04:35:37 UTC] PHP Warning:  Undefined variable $is_profile_page in C:\xampp\htdocs\nimru-Web\student\student-header.php on line 37
