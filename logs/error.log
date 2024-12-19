@@ -88,3 +88,17 @@ Stack trace:
 [19-Dec-2024 02:31:32 UTC] PHP Warning:  Constant DB_PASS already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 14
 [19-Dec-2024 02:31:32 UTC] PHP Warning:  Constant DB_CHARSET already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 15
 [19-Dec-2024 02:31:32 UTC] PHP Warning:  Constant DB_PORT already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 16
+[19-Dec-2024 03:20:09 UTC] User data loaded successfully
+[19-Dec-2024 03:20:09 UTC] PHP Warning:  Undefined variable $is_profile_page in C:\xampp\htdocs\nimru-Web\student\student-header.php on line 33
+[19-Dec-2024 04:12:17 UTC] User data loaded successfully
+[19-Dec-2024 04:12:17 UTC] PHP Warning:  Undefined variable $is_profile_page in C:\xampp\htdocs\nimru-Web\student\student-header.php on line 33
+[19-Dec-2024 04:14:39 UTC] User data loaded successfully
+[19-Dec-2024 04:14:39 UTC] PHP Warning:  Undefined variable $is_profile_page in C:\xampp\htdocs\nimru-Web\student\student-header.php on line 33
+[19-Dec-2024 04:17:54 UTC] User data loaded successfully
+[19-Dec-2024 04:17:54 UTC] PHP Warning:  Undefined variable $is_profile_page in C:\xampp\htdocs\nimru-Web\student\student-header.php on line 33
+[19-Dec-2024 04:25:43 UTC] User data loaded successfully
+[19-Dec-2024 04:25:43 UTC] PHP Warning:  Undefined variable $is_profile_page in C:\xampp\htdocs\nimru-Web\student\student-header.php on line 37
+[19-Dec-2024 04:26:07 UTC] User data loaded successfully
+[19-Dec-2024 04:26:07 UTC] PHP Warning:  Undefined variable $is_profile_page in C:\xampp\htdocs\nimru-Web\student\student-header.php on line 37
+[19-Dec-2024 04:26:31 UTC] User data loaded successfully
+[19-Dec-2024 04:26:31 UTC] PHP Warning:  Undefined variable $is_profile_page in C:\xampp\htdocs\nimru-Web\student\student-header.php on line 37
