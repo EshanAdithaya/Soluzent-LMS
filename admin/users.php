@@ -198,7 +198,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['error'] = $e->getMessage();
         }
         
-        header('Location: students.php');
+        header('Location: users.php');
         exit;
     }
 }
@@ -335,7 +335,7 @@ if ($isTeacher) {
 $classes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Set page title based on role
-$title = $isTeacher ? 'My Students' : 'Students Management';
+$title = $isTeacher ? 'My Students' : 'User management';
 ?>
 
 <!DOCTYPE html>
@@ -401,6 +401,7 @@ $title = $isTeacher ? 'My Students' : 'Students Management';
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Enrolled Classes</th>
                         <?php if (!$isTeacher): ?>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered Teachers</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                         <?php endif; ?>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>

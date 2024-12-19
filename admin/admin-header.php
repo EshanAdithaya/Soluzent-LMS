@@ -42,7 +42,7 @@ if (strpos($current_page, 'profile.php') !== false) {
                     $nav_items = [
                         'dashboard.php' => 'Dashboard',
                         'classes.php' => 'Classes',
-                        'students.php' => 'Students',
+                        'users.php' => 'Students',
                         'materials.php' => 'Materials'
                     ];
 

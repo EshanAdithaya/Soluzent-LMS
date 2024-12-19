@@ -82,3 +82,9 @@ Stack trace:
 [18-Dec-2024 03:20:23 UTC] PHP Deprecated:  basename(): Passing null to parameter #1 ($path) of type string is deprecated in C:\xampp\htdocs\github\nimru-Web\admin\admin-header.php on line 5
 [18-Dec-2024 03:22:22 UTC] User data loaded successfully
 [18-Dec-2024 03:22:22 UTC] PHP Warning:  Undefined variable $is_profile_page in C:\xampp\htdocs\github\nimru-Web\student\student-header.php on line 33
+[19-Dec-2024 02:31:32 UTC] PHP Warning:  Constant DB_HOST already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 11
+[19-Dec-2024 02:31:32 UTC] PHP Warning:  Constant DB_NAME already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 12
+[19-Dec-2024 02:31:32 UTC] PHP Warning:  Constant DB_USER already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 13
+[19-Dec-2024 02:31:32 UTC] PHP Warning:  Constant DB_PASS already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 14
+[19-Dec-2024 02:31:32 UTC] PHP Warning:  Constant DB_CHARSET already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 15
+[19-Dec-2024 02:31:32 UTC] PHP Warning:  Constant DB_PORT already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 16
