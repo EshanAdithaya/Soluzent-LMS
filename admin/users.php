@@ -3,7 +3,6 @@ require_once '../asset/php/config.php';
 require_once '../asset/php/db.php';
 require_once 'adminSession.php';
 
-
 $isTeacher = $_SESSION['role'] === 'teacher';
 
 // Handle form submissions
@@ -160,12 +159,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['success'] = 'Student unenrolled successfully';
                     break;
 
-                case 'generate_invite':
+                    case 'generate_invite':
+               
+             
                     if (!$isTeacher) {
                         throw new Exception('Only teachers can generate invite links');
                     }
                     
                     $pdo->beginTransaction();
+                    
                     
                     // Deactivate existing active links
                     $stmt = $pdo->prepare("
@@ -428,6 +430,10 @@ $title = $isTeacher ? 'My Students' : 'User management';
                         <td class="px-6 py-4 text-sm text-gray-500">
                             <?= $student['registered_teachers'] ? htmlspecialchars($student['registered_teachers']) : 'No teachers' ?>
                         </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">
+                        <?= $student['role'] ? htmlspecialchars($student['role']) : 'No role add' ?>
+       
+                                    </td>
                         <?php endif; ?>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <button onclick="openEditModal(<?= htmlspecialchars(json_encode($student)) ?>)" 
