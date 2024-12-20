@@ -88,10 +88,10 @@ $this->currentPage = basename($_SERVER['REQUEST_URI']); // Use REQUEST_URI as a 
                 <div class="flex">
                     <div class="flex-shrink-0 flex items-center">
                         <?php if ($this->isActive('index.php')): ?>
-                            <span class="text-2xl font-bold text-indigo-600">🎄 SOLUZENT LMS ⛄</span>
+                            <img src="soluzent lms.png" alt="" style=" height: 50px;">
                         <?php else: ?>
                             <a href="index.php" class="text-2xl font-bold text-indigo-600">
-                                🎄 SOLUZENT LMS ⛄
+                                <img src="soluzent lms.png" alt="" style=" height: 50px;">
                             </a>
                         <?php endif; ?>
                     </div>
