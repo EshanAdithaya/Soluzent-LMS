@@ -24,7 +24,7 @@
                     <!-- Contact Form -->
                     <div class="bg-white p-6 rounded-lg shadow-lg">
                         <h2 class="text-2xl font-bold text-gray-900 mb-6">Send us a Message</h2>
-                        <form action="process_contact.php" method="POST">
+                        <form >
                             <div class="mb-4">
                                 <label for="name" class="block text-gray-700 mb-2">Full Name</label>
                                 <input type="text" id="name" name="name" required
@@ -45,7 +45,7 @@
                                 <textarea id="message" name="message" rows="4" required
                                     class="w-full px-4 py-2 border rounded-md focus:outline-none focus:border-indigo-500"></textarea>
                             </div>
-                            <button type="submit"
+                            <button onclick="sendEmail();"
                                 class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700">
                                 Send Message
                             </button>
@@ -123,23 +123,32 @@
 <!-- Contact Form Processing Script -->
 <script>
     // Form validation
-    const contactForm = document.querySelector('form');
-    contactForm.addEventListener('submit', function(e) {
-        e.preventDefault();
+   function sendEmail() {
+        
         
         // Basic form validation
-        const name = document.getElementById('name').value.trim();
-        const email = document.getElementById('email').value.trim();
-        const subject = document.getElementById('subject').value.trim();
-        const message = document.getElementById('message').value.trim();
-        
-        if (name && email && subject && message) {
-            // Here you would typically send the form data to your server
-            // For now, we'll just show a success message
-            alert('Thank you for your message. We will get back to you soon!');
-            contactForm.reset();
+        var name = document.getElementById('name').value;
+        var email = document.getElementById('email').value;
+        var subject = document.getElementById('subject').value;
+        var message = document.getElementById('message').value;
+
+           var form = new FormData();
+           form.append("name", name);
+           form.append("email", email);
+           form.append("subject", subject);
+           form.append("message", message);
+           var xhr = new XMLHttpRequest();
+           xhr.onreadystatechange = function(){
+        if(xhr.readyState == 4 & xhr.status == 200){
+            var response = xhr.responseText;
+                alert(response);
+            
         }
-    });
+    }
+    xhr.open("POST", "emailSender.php", true);
+    xhr.send(form);
+    }
+  
 </script>
 </body>
 </html>

@@ -104,3 +104,15 @@ Stack trace:
 [19-Dec-2024 04:26:31 UTC] PHP Warning:  Undefined variable $is_profile_page in C:\xampp\htdocs\nimru-Web\student\student-header.php on line 37
 [19-Dec-2024 04:35:37 UTC] User data loaded successfully
 [19-Dec-2024 04:35:37 UTC] PHP Warning:  Undefined variable $is_profile_page in C:\xampp\htdocs\nimru-Web\student\student-header.php on line 37
+[20-Dec-2024 04:12:09 UTC] PHP Warning:  Constant DB_HOST already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 11
+[20-Dec-2024 04:12:09 UTC] PHP Warning:  Constant DB_NAME already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 12
+[20-Dec-2024 04:12:09 UTC] PHP Warning:  Constant DB_USER already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 13
+[20-Dec-2024 04:12:09 UTC] PHP Warning:  Constant DB_PASS already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 14
+[20-Dec-2024 04:12:09 UTC] PHP Warning:  Constant DB_CHARSET already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 15
+[20-Dec-2024 04:12:09 UTC] PHP Warning:  Constant DB_PORT already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 16
+[20-Dec-2024 04:12:22 UTC] PHP Warning:  Constant DB_HOST already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 11
+[20-Dec-2024 04:12:22 UTC] PHP Warning:  Constant DB_NAME already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 12
+[20-Dec-2024 04:12:22 UTC] PHP Warning:  Constant DB_USER already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 13
+[20-Dec-2024 04:12:22 UTC] PHP Warning:  Constant DB_PASS already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 14
+[20-Dec-2024 04:12:22 UTC] PHP Warning:  Constant DB_CHARSET already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 15
+[20-Dec-2024 04:12:22 UTC] PHP Warning:  Constant DB_PORT already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 16
