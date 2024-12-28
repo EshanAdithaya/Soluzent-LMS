@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once '../asset/php/config.php';
 require_once '../asset/php/db.php';
  include_once 'admin-header.php';
@@ -54,33 +55,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             break;
 
         case 'enroll':
-            if (isset($_POST['students']) && is_array($_POST['students'])) {
-                try {
-                    $pdo->beginTransaction();
-                    $stmt = $pdo->prepare("
-                        INSERT IGNORE INTO enrollments (student_id, class_id, teacher_id) 
-                        SELECT ?, ?, ? 
-                        FROM teacher_students 
-                        WHERE teacher_id = ? AND student_id = ? AND status = 'accepted'
-                    ");
-                    
-                    foreach ($_POST['students'] as $studentId) {
-                        $stmt->execute([
-                            $studentId, 
-                            $_POST['class_id'],
-                            $_SESSION['user_id'],
-                            $_SESSION['user_id'],
-                            $studentId
-                        ]);
-                    }
-                    $pdo->commit();
-                } catch (PDOException $e) {
-                    $pdo->rollBack();
-                    error_log($e->getMessage());
+            try {
+                $pdo->beginTransaction();
+                $stmt = $pdo->prepare("
+                    INSERT IGNORE INTO enrollments (student_id, class_id, teacher_id) 
+                    SELECT ?, ?, ? 
+                    FROM teacher_students 
+                    WHERE teacher_id = ? AND student_id = ? AND status = 'accepted'
+                ");
+                
+                foreach ($_POST['students'] as $studentId) {
+                    $teacherId = $_SESSION['role'] === 'teacher' ? $_SESSION['user_id'] : $_POST['teacherId'];
+                    $stmt->execute([
+                        $studentId, 
+                        $_POST['class_id'],
+                        $teacherId,
+                        $_SESSION['user_id'],
+                        $studentId
+                    ]);
                 }
+                $pdo->commit();
+                header('Location: classes.php');
+                exit;
+            } catch (PDOException $e) {
+                $pdo->rollBack();
+                error_log($e->getMessage());
+                $_SESSION['error'] = "Error enrolling students";
+                header('Location: classes.php');
+                exit;
             }
-            header('Location: classes.php');
-            exit;
             break;
 
         case 'unenroll':
@@ -204,9 +207,11 @@ $students = $stmt->fetchAll();
                         <td class="px-6 py-4 text-sm text-gray-500">
                             <?php if ($_SESSION['role'] !== 'teacher'): ?>
                                 <?= htmlspecialchars($class['creator_name']) ?> 
-                                (<?= htmlspecialchars($class['creator_email']) ?>)
+                                <?= htmlspecialchars($class['creator_name']) ?> 
+                                (<?= htmlspecialchars($class['created_by']) ?>)
                             <?php endif; ?>
                         </td>
+                        <input type="hidden" name="ClassteacherId" id="ClassteacherId" value="<?= htmlspecialchars($class['created_by']) ?>">
                         <td class="px-6 py-4 text-sm text-gray-500">
                             <?= htmlspecialchars($class['description']) ?>
                         </td>
@@ -270,9 +275,10 @@ $students = $stmt->fetchAll();
     <div id="enrollModal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
         <div class="bg-white rounded-lg p-8 max-w-md w-full">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Enroll Students</h3>
-            <form method="POST">
+            <form method="POST" >
                 <input type="hidden" name="action" value="enroll">
                 <input type="hidden" name="class_id" id="enrollClassId">
+                <input type="hidden" name="teacherID" id="teacherID">
                 
                 <div class="space-y-4">
                     <input type="text" id="studentSearch" placeholder="Search students..." 
@@ -341,6 +347,7 @@ $students = $stmt->fetchAll();
 
         function openEnrollModal(classId) {
             document.getElementById('enrollClassId').value = classId;
+            document.getElementById('teacherID').value = document.getElementById('ClassteacherId').value;
             document.getElementById('enrollModal').classList.remove('hidden');
         }
 
