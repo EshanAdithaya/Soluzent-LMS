@@ -3,8 +3,10 @@ require_once '../asset/php/config.php';
 require_once '../asset/php/db.php';
 require_once 'adminSession.php';
 
-$title = isset($_SESSION['role']) && $_SESSION['role'] === 'teacher' ? 'Teacher Dashboard' : 'Admin Dashboard';
+
 $isTeacher = isset($_SESSION['role']) && $_SESSION['role'] === 'teacher';
+$isAdmin = isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
+$title = $isTeacher ? 'Teacher Dashboard' : ($isAdmin ? 'Admin Dashboard' : 'User Dashboard');
 $is_dashboard_page = basename($_SERVER['APP_URL']) === 'dashboard.php';
 
 try {
