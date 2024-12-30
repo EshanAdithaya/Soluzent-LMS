@@ -10,13 +10,12 @@ $totalCourses = 0;
 try {
     // Get total students - using prepared statements for better security
     $totalStudentsQuery = "SELECT COUNT(*) as count FROM users WHERE role='student'";
-    if ($stmt = $db->prepare($totalStudentsQuery)) {
+    if ($stmt = $pdo->prepare($totalStudentsQuery)) {
         $stmt->execute();
-        $result = $stmt->get_result();
-        if ($row = $result->fetch_assoc()) {
+        if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $totalStudents = $row['count'];
         }
-        $stmt->close();
+        $stmt = null;
     }
 
     // Get total mentors (teachers)
@@ -24,24 +23,23 @@ try {
                          FROM users u 
                          JOIN teacher_profiles tp ON u.id = tp.user_id 
                          WHERE u.role='teacher' AND tp.status='approved'";
-    if ($stmt = $db->prepare($totalMentorsQuery)) {
+    if ($stmt = $pdo->prepare($totalMentorsQuery)) {
         $stmt->execute();
-        $result = $stmt->get_result();
-        if ($row = $result->fetch_assoc()) {
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if ($row = reset($result)) {
             $totalMentors = $row['count'];
         }
-        $stmt->close();
+        $stmt = null;
     }
 
     // Get total courses
     $totalCoursesQuery = "SELECT COUNT(*) as count FROM classes";
-    if ($stmt = $db->prepare($totalCoursesQuery)) {
+    if ($stmt = $pdo->prepare($totalCoursesQuery)) {
         $stmt->execute();
-        $result = $stmt->get_result();
-        if ($row = $result->fetch_assoc()) {
+        if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $totalCourses = $row['count'];
         }
-        $stmt->close();
+        $stmt = null;
     }
 } catch (Exception $e) {
     // Log error for debugging (don't show to users in production)

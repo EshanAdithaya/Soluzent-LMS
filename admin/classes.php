@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $studentId, 
                         $_POST['class_id'],
                         $teacherId,
-                        $_SESSION['user_id'],
+                        $teacherId,
                         $studentId
                     ]);
                 }
@@ -206,9 +206,8 @@ $students = $stmt->fetchAll();
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-500">
                             <?php if ($_SESSION['role'] !== 'teacher'): ?>
-                                <?= htmlspecialchars($class['creator_name']) ?> 
-                                <?= htmlspecialchars($class['creator_name']) ?> 
-                                (<?= htmlspecialchars($class['created_by']) ?>)
+                                <?= htmlspecialchars($class['creator_name']) ?>  
+                                (<?= htmlspecialchars($class['creator_email']) ?>)
                             <?php endif; ?>
                         </td>
                         <input type="hidden" name="ClassteacherId" id="ClassteacherId" value="<?= htmlspecialchars($class['created_by']) ?>">
