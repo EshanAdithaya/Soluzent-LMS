@@ -32,7 +32,7 @@ class EmailSender {
             $this->mailer->Subject = 'Password Reset Request';
             
             // Create HTML message
-            $resetLink = "https://yourdomain.com/reset-password.php?token=" . $token;
+            $resetLink = "http://161.35.63.178/nimru-Web/reset-password.php?token=" . $token;
             $this->mailer->Body = "
                 <h2>Password Reset Request</h2>
                 <p>You have requested to reset your password. Click the link below to proceed:</p>

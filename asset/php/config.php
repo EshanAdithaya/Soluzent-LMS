@@ -71,7 +71,7 @@ function sanitize_input($data) {
     return htmlspecialchars(strip_tags(trim($data)));
 }
 
-function generate_random_string($length = 5) {
+function generate_random_string($length = 32) {
     return bin2hex(random_bytes($length / 2));
 }
 

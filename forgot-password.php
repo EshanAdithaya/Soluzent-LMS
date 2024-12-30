@@ -14,14 +14,22 @@ function handlePasswordReset($email, $pdo) {
     }
 
     try {
+        // Set the timezone to Sri Lanka
+        date_default_timezone_set('Asia/Colombo');
+
         $stmt = $pdo->prepare('SELECT id FROM users WHERE email = ?');
         $stmt->execute([$email]);
         $user = $stmt->fetch();
 
         if ($user) {
-            $token = generate_random_string(5);
-            $stmt = $pdo->prepare('INSERT INTO reset_tokens (user_id, token, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 HOUR))');
-            $stmt->execute([$user['id'], $token]);
+            $token = generate_random_string(32);
+            
+            // Calculate expiration time
+            $expiresAt = (new DateTime())->add(new DateInterval('PT1H'))->format('Y-m-d H:i:s');
+
+            // Insert the reset token with the calculated expiration time
+            $stmt = $pdo->prepare('INSERT INTO reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)');
+            $stmt->execute([$user['id'], $token, $expiresAt]);
 
             $resetUrl = APP_URL . '/reset-password.php?token=' . $token;
             $emailSender = new EmailSender();
@@ -46,6 +54,7 @@ function handlePasswordReset($email, $pdo) {
 
     return $response;
 }
+
 // Handle the request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
@@ -62,6 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
