@@ -2,7 +2,7 @@
 session_start();
 require_once '../asset/php/config.php';
 require_once '../asset/php/db.php';
- include_once 'admin-header.php';
+
  require_once 'adminSession.php';
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -172,8 +172,20 @@ $students = $stmt->fetchAll();
 </head>
 <body class="bg-gray-50">
     <!-- Navigation -->
-   
-
+    <?php  include_once 'admin-header.php'; ?>
+    <?php if (isset($_SESSION['success'])): ?>
+            <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
+                <?= htmlspecialchars($_SESSION['success']) ?>
+                <?php unset($_SESSION['success']); ?>
+            </div>
+        <?php endif; ?>
+        
+        <?php if (isset($_SESSION['error'])): ?>
+            <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+                <?= htmlspecialchars($_SESSION['error']) ?>
+                <?php unset($_SESSION['error']); ?>
+            </div>
+        <?php endif; ?>
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <!-- Header -->
