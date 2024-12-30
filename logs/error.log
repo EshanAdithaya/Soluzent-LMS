@@ -116,3 +116,4 @@ Stack trace:
 [20-Dec-2024 04:12:22 UTC] PHP Warning:  Constant DB_PASS already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 14
 [20-Dec-2024 04:12:22 UTC] PHP Warning:  Constant DB_CHARSET already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 15
 [20-Dec-2024 04:12:22 UTC] PHP Warning:  Constant DB_PORT already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 16
+[30-Dec-2024 05:12:12 UTC] User data loaded successfully
