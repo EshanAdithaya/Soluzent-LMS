@@ -1,3 +1,51 @@
+<?php 
+require_once 'asset/php/config.php';
+require_once 'asset/php/db.php';
+
+// Initialize variables with default values in case queries fail
+$totalStudents = 0;
+$totalMentors = 0;
+$totalCourses = 0;
+
+try {
+    // Get total students - using prepared statements for better security
+    $totalStudentsQuery = "SELECT COUNT(*) as count FROM users WHERE role='student'";
+    if ($stmt = $pdo->prepare($totalStudentsQuery)) {
+        $stmt->execute();
+        if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $totalStudents = $row['count'];
+        }
+        $stmt = null;
+    }
+
+    // Get total mentors (teachers)
+    $totalMentorsQuery = "SELECT COUNT(DISTINCT u.id) as count 
+                         FROM users u 
+                         JOIN teacher_profiles tp ON u.id = tp.user_id 
+                         WHERE u.role='teacher' AND tp.status='approved'";
+    if ($stmt = $pdo->prepare($totalMentorsQuery)) {
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if ($row = reset($result)) {
+            $totalMentors = $row['count'];
+        }
+        $stmt = null;
+    }
+
+    // Get total courses
+    $totalCoursesQuery = "SELECT COUNT(*) as count FROM classes";
+    if ($stmt = $pdo->prepare($totalCoursesQuery)) {
+        $stmt->execute();
+        if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $totalCourses = $row['count'];
+        }
+        $stmt = null;
+    }
+} catch (Exception $e) {
+    // Log error for debugging (don't show to users in production)
+    error_log("Database error: " . $e->getMessage());
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,6 +55,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body class="bg-gray-50">
 <?php include_once 'navbar.php';?>
     <!-- Hero Section -->
@@ -86,15 +135,15 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-2 gap-8 md:grid-cols-4 text-center">
                 <div>
-                    <div class="text-4xl font-bold text-indigo-600">500+</div>
+                    <div class="text-4xl font-bold text-indigo-600"><?php echo $totalStudents ?>+</div>
                     <div class="mt-2 text-gray-600">Active Students</div>
                 </div>
                 <div>
-                    <div class="text-4xl font-bold text-indigo-600">50+</div>
+                    <div class="text-4xl font-bold text-indigo-600"><?php echo $totalMentors ?>+</div>
                     <div class="mt-2 text-gray-600">Expert Mentors</div>
                 </div>
                 <div>
-                    <div class="text-4xl font-bold text-indigo-600">100+</div>
+                    <div class="text-4xl font-bold text-indigo-600"><?php echo $totalCourses ?>+</div>
                     <div class="mt-2 text-gray-600">Courses</div>
                 </div>
                 <div>
