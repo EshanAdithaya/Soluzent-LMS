@@ -9,7 +9,7 @@ $current_page = basename($_SERVER['REQUEST_URI']); // Use REQUEST_URI as a fallb
 <nav class="bg-white shadow">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
-                <div class="flex items-center">
+            <div class="flex items-center">
                     <?php
                     $current_page = basename($_SERVER['REQUEST_URI']);
                     if ($current_page === 'Dashboard.php'): ?>
@@ -20,9 +20,10 @@ $current_page = basename($_SERVER['REQUEST_URI']); // Use REQUEST_URI as a fallb
                         <a href="Dashboard.php" class="text-xl font-bold text-gray-900 hover:text-gray-700">Student Dashboard</a>
                     <?php endif; ?>
                     
-                <a href="enrolled-classes.php" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700">
-                    My Enrolled Classes    
-                    </a>
+                    <a href="enrolled-classes.php" class="text-xl font-bold text-gray-900 hover:text-gray-700 ml-10">
+                        My Enrolled Classes
+                        </a>
+
 
                 </div>
                 <div class="flex items-center space-x-4">
