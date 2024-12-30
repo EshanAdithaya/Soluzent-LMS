@@ -1,74 +1,63 @@
 <?php
-// include("env.php"); // Assuming this file contains your environment variables.
-require "emailSender/SMTP.php";
-require "emailSender/PHPMailer.php";
-require "emailSender/Exception.php";
-require "asset/php/config.php";
-
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
-// Input data
-$name = trim($_POST["name"]);
-$email = trim($_POST["email"]);
-$subject = trim($_POST["subject"]);
-$message = trim($_POST["message"]);
-
-
-// if (intval($responseKeys["success"]) !== 1) {
-//     echo 'Please complete the reCAPTCHA correctly.';
-// } else {
-
-    // Validation
-    if (empty($name)) {
-        echo "Enter Name";
-    } elseif (empty($email)) {
-        echo "Enter Email";
-    } elseif (strlen($email) > 100) {
-        echo "Email Address Should Contain Less Than 100 Characters";
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        echo "Invalid Email";
-    } elseif (empty($subject)) {
-        echo "Enter Subject";
-    } elseif (empty($message)) {
-        echo "Enter Message";
-    } else {
-        // Send email
+class EmailSender {
+    private $mailer;
+    
+    public function __construct() {
+        require 'vendor/autoload.php'; // Make sure you have PHPMailer installed via composer
         
-
+        $this->mailer = new PHPMailer\PHPMailer\PHPMailer(true);
+        
+        // Server settings for Gmail SMTP
+        $this->mailer->isSMTP();
+        $this->mailer->Host = 'smtp.gmail.com';
+        $this->mailer->SMTPAuth = true;
+        $this->mailer->Username = 'your-email@gmail.com'; // Your Gmail address
+        $this->mailer->Password = 'your-app-specific-password'; // Your Gmail App Password
+        $this->mailer->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+        $this->mailer->Port = 587;
+        
+        // Default sender
+        $this->mailer->setFrom('your-email@gmail.com', 'SOLUZENT LMS');
+    }
+    
+    public function sendPasswordResetEmail($to, $token) {
         try {
-            $mail = new PHPMailer;
-            // $mail->SMTPDebug = 2; // Enable verbose debug output
-            $mail->isSMTP(); 
-            $mail->Host = 'smtp.gmail.com';
-            $mail->SMTPAuth = true;
-            $mail->Username = 'skaushalya708@gmail.com';
-            // Fetch the password securely from the environment variable
-            $mail->Password = 'ingk ndva cjdv ywlu'; 
-            $mail->SMTPSecure = 'ssl';
-            $mail->Port = 465;
+            $this->mailer->addAddress($to);
+            $this->mailer->isHTML(true);
+            $this->mailer->Subject = 'Password Reset Request';
             
-            $mail->setFrom($email, $name);
-            $mail->addReplyTo($email, $name);
-            $mail->addAddress('skaushalya708@gmail.com');
-            $mail->isHTML(true);
-            $mail->Subject = 'New Email - ' . $subject;
+            // Create HTML message
+            $resetLink = "https://yourdomain.com/reset-password.php?token=" . $token;
+            $this->mailer->Body = "
+                <h2>Password Reset Request</h2>
+                <p>You have requested to reset your password. Click the link below to proceed:</p>
+                <p><a href='{$resetLink}'>Reset Password</a></p>
+                <p>This link will expire in 1 hour.</p>
+                <p>If you didn't request this, please ignore this email.</p>
+            ";
             
-            $bodyContent = '<p>Name: ' . htmlspecialchars($name) . '</p>';
-            $bodyContent .= '<p>Email: ' . htmlspecialchars($email) . '</p>';
-            $bodyContent .= '<p>Subject: ' . htmlspecialchars($subject) . '</p>';
-            $bodyContent .= '<p>Message: ' . nl2br(htmlspecialchars($message)) . '</p>'; // Converts newlines to <br>
-            
-            $mail->Body = $bodyContent;
-
-            if (!$mail->send()) {
-                echo 'Message Send Failed: ' . $mail->ErrorInfo;
-            } else {
-                echo 'Thank you for your message. We will get back to you soon!';
-            }
+            $this->mailer->send();
+            return true;
         } catch (Exception $e) {
-            echo 'Message could not be sent. Mailer Error: ' . $mail->ErrorInfo;
+            error_log("Email Error: " . $e->getMessage());
+            return false;
         }
     }
-// }
-?>
+    
+    // Add other email sending methods as needed
+    public function sendGenericEmail($to, $subject, $body) {
+        try {
+            $this->mailer->clearAddresses();
+            $this->mailer->addAddress($to);
+            $this->mailer->isHTML(true);
+            $this->mailer->Subject = $subject;
+            $this->mailer->Body = $body;
+            
+            $this->mailer->send();
+            return true;
+        } catch (Exception $e) {
+            error_log("Email Error: " . $e->getMessage());
+            return false;
+        }
+    }
+}

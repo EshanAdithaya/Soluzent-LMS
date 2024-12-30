@@ -1,39 +1,54 @@
+<?php
+require_once 'asset/php/config.php';
+require_once 'asset/php/db.php';
+
+// Get about page content
+$stmt = $pdo->prepare("SELECT * FROM about_page WHERE id = 1");
+$stmt->execute();
+$about = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// Get active team members ordered by display order
+$stmt = $pdo->prepare("SELECT * FROM team_members WHERE is_active = 1 ORDER BY display_order");
+$stmt->execute();
+$team_members = $stmt->fetchAll(PDO::FETCH_ASSOC);
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Us - SOLUZENT LMS</title>
+    <title><?php echo htmlspecialchars($about['meta_title']); ?></title>
+    <meta name="description" content="<?php echo htmlspecialchars($about['meta_description']); ?>">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body class="bg-gray-50">
-    <!-- Navigation (Same as index.php) -->
-    <?php include_once 'navbar.php';
-?>
+    <?php include_once 'navbar.php'; ?>
 
     <!-- About Hero Section -->
-    <div class="pt-16">
-        <div class="relative bg-white<!-- Continuing from previous About page... -->
     <div class="pt-16">
         <div class="relative bg-white overflow-hidden">
             <div class="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
                 <div class="text-center">
-                    <h1 class="text-4xl font-extrabold text-gray-900">About SOLUZENT LMS</h1>
-                    <p class="mt-4 text-xl text-gray-500">Transforming education through innovative technology solutions</p>
+                    <h1 class="text-4xl font-extrabold text-gray-900">
+                        <?php echo htmlspecialchars($about['hero_title']); ?>
+                    </h1>
+                    <p class="mt-4 text-xl text-gray-500">
+                        <?php echo htmlspecialchars($about['hero_subtitle']); ?>
+                    </p>
                 </div>
 
                 <!-- Company Story -->
                 <div class="mt-16">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                         <div>
-                            <h2 class="text-2xl font-bold text-gray-900 mb-4">Our Story</h2>
-                            <p class="text-gray-600 mb-4">
-                                SOLUZENT Technology was founded with a vision to make quality education accessible and affordable. Our Learning Management System combines cutting-edge technology with intuitive design to create an effective learning environment.
-                            </p>
-                            <p class="text-gray-600">
-                                We believe in the power of multiple mentors and diverse perspectives to enrich the learning experience. Our platform enables students to learn from various experts while maintaining high security standards and keeping costs low.
-                            </p>
+                            <h2 class="text-2xl font-bold text-gray-900 mb-4">
+                                <?php echo htmlspecialchars($about['story_title']); ?>
+                            </h2>
+                            <div class="text-gray-600 space-y-4">
+                                <?php echo nl2br(htmlspecialchars($about['story_content'])); ?>
+                            </div>
                         </div>
                         <div class="flex justify-center">
                         <img src="blankImg/icon.jpg" alt="About Us" class="rounded-lg shadow-lg w-48 h-auto">
@@ -50,7 +65,7 @@
                         </div>
                         <h3 class="text-xl font-bold text-gray-900 mb-4">Our Mission</h3>
                         <p class="text-gray-600">
-                            To provide an accessible, secure, and comprehensive learning platform that connects students with expert mentors and enables effective knowledge transfer at an affordable cost.
+                            <?php echo nl2br(htmlspecialchars($about['mission_content'])); ?>
                         </p>
                     </div>
                     <div class="bg-white p-6 rounded-lg shadow-lg">
@@ -59,7 +74,7 @@
                         </div>
                         <h3 class="text-xl font-bold text-gray-900 mb-4">Our Vision</h3>
                         <p class="text-gray-600">
-                            To become the leading multi-mentor learning platform that transforms education delivery while maintaining the highest standards of security and affordability.
+                            <?php echo nl2br(htmlspecialchars($about['vision_content'])); ?>
                         </p>
                     </div>
                 </div>
@@ -68,28 +83,47 @@
                 <div class="mt-16">
                     <h2 class="text-3xl font-bold text-gray-900 text-center mb-8">Our Leadership Team</h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <?php foreach ($team_members as $member): ?>
                         <div class="bg-white p-6 rounded-lg shadow-lg text-center">
-                            <img src="blankImg/icon.jpg" alt="Team Member" class="rounded-full mx-auto mb-4 w-32 h-auto">
-                            <h3 class="text-xl font-bold text-gray-900">John Smith</h3>
-                            <p class="text-gray-600">CEO & Founder</p>
+
+                            <?php if (!empty($member['image_path'])): ?>
+                                <img src="<?php echo htmlspecialchars($member['image_path']); ?>" 
+                                     alt="<?php echo htmlspecialchars($member['name']); ?>" 
+                                     class="w-32 h-32 rounded-full mx-auto mb-4 object-cover">
+                            <?php else: ?>
+                                <div class="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center mx-auto mb-4">
+                                    <i class="fas fa-user text-gray-400 text-4xl"></i>
+                                </div>
+                            <?php endif; ?>
+                            <h3 class="text-xl font-bold text-gray-900"><?php echo htmlspecialchars($member['name']); ?></h3>
+                            <p class="text-gray-600"><?php echo htmlspecialchars($member['position']); ?></p>
+                            <?php if (!empty($member['bio'])): ?>
+                                <p class="mt-2 text-sm text-gray-500"><?php echo htmlspecialchars($member['bio']); ?></p>
+                            <?php endif; ?>
+                            <div class="mt-4 flex justify-center space-x-4">
+                                <?php if (!empty($member['social_linkedin'])): ?>
+                                    <a href="<?php echo htmlspecialchars($member['social_linkedin']); ?>" 
+                                       target="_blank" 
+                                       class="text-gray-400 hover:text-blue-500">
+                                        <i class="fab fa-linkedin"></i>
+                                    </a>
+                                <?php endif; ?>
+                                <?php if (!empty($member['social_twitter'])): ?>
+                                    <a href="<?php echo htmlspecialchars($member['social_twitter']); ?>" 
+                                       target="_blank" 
+                                       class="text-gray-400 hover:text-blue-400">
+                                        <i class="fab fa-twitter"></i>
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+
                         </div>
-                        <div class="bg-white p-6 rounded-lg shadow-lg text-center">
-                        <img src="blankImg/icon.jpg" alt="Team Member" class="rounded-full mx-auto mb-4 w-32 h-auto">
-                            <h3 class="text-xl font-bold text-gray-900">Sarah Johnson</h3>
-                            <p class="text-gray-600">CTO</p>
-                        </div>
-                        <div class="bg-white p-6 rounded-lg shadow-lg text-center">
-                        <img src="blankImg/icon.jpg" alt="Team Member" class="rounded-full mx-auto mb-4 w-32 h-auto">
-                            <h3 class="text-xl font-bold text-gray-900">Michael Chen</h3>
-                            <p class="text-gray-600">Head of Education</p>
-                        </div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Footer (Same as index.php) -->
 
     <?php include_once 'footer.php'; ?>
 </body>
