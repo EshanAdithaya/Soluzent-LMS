@@ -1,9 +1,14 @@
 <?php
+require 'emailSender/Exception.php';
+require 'emailSender/OAuth.php';
+require 'emailSender/POP3.php';
+require 'emailSender/SMTP.php';
+require 'emailSender/PHPMailer.php';
 class EmailSender {
     private $mailer;
     
     public function __construct() {
-        require 'vendor/autoload.php'; // Make sure you have PHPMailer installed via composer
+         // Make sure you have PHPMailer installed via composer
         
         $this->mailer = new PHPMailer\PHPMailer\PHPMailer(true);
         
@@ -17,7 +22,7 @@ class EmailSender {
         $this->mailer->Port = 587;
         
         // Default sender
-        $this->mailer->setFrom('your-email@gmail.com', 'SOLUZENT LMS');
+        $this->mailer->setFrom('testfeeldbroken10@gmail.com', 'SOLUZENT LMS');
     }
     
     public function sendPasswordResetEmail($to, $token) {

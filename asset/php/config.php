@@ -23,7 +23,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Error Reporting
 error_reporting(E_ALL);
-ini_set('display_errors', 0);
+ini_set('display_errors', 1);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/error.log');
 
@@ -71,13 +71,15 @@ function sanitize_input($data) {
     return htmlspecialchars(strip_tags(trim($data)));
 }
 
-function generate_random_string($length = 10) {
-    return bin2hex(random_bytes($length));
+function generate_random_string($length = 5) {
+    return bin2hex(random_bytes($length / 2));
 }
+
 
 function is_valid_email($email) {
     return filter_var($email, FILTER_VALIDATE_EMAIL);
 }
+
 
 function redirect($path) {
     $url = APP_URL;
