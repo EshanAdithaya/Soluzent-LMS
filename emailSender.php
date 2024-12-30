@@ -11,8 +11,8 @@ class EmailSender {
         $this->mailer->isSMTP();
         $this->mailer->Host = 'smtp.gmail.com';
         $this->mailer->SMTPAuth = true;
-        $this->mailer->Username = 'your-email@gmail.com'; // Your Gmail address
-        $this->mailer->Password = 'your-app-specific-password'; // Your Gmail App Password
+        $this->mailer->Username = 'testfeeldbroken10@gmail.com'; // Your Gmail address
+        $this->mailer->Password = 'suul aqjj ltju klrn'; // Your Gmail App Password
         $this->mailer->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
         $this->mailer->Port = 587;
         
