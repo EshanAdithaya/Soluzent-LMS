@@ -36,7 +36,8 @@
                             </p>
                         </div>
                         <div class="flex justify-center">
-                            <img src="/api/placeholder/500/300" alt="About Us" class="rounded-lg shadow-lg">
+                        <img src="blankImg/icon.jpg" alt="About Us" class="rounded-lg shadow-lg w-48 h-auto">
+
                         </div>
                     </div>
                 </div>
@@ -68,17 +69,17 @@
                     <h2 class="text-3xl font-bold text-gray-900 text-center mb-8">Our Leadership Team</h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <div class="bg-white p-6 rounded-lg shadow-lg text-center">
-                            <img src="/api/placeholder/150/150" alt="Team Member" class="rounded-full mx-auto mb-4">
+                            <img src="blankImg/icon.jpg" alt="Team Member" class="rounded-full mx-auto mb-4 w-32 h-auto">
                             <h3 class="text-xl font-bold text-gray-900">John Smith</h3>
                             <p class="text-gray-600">CEO & Founder</p>
                         </div>
                         <div class="bg-white p-6 rounded-lg shadow-lg text-center">
-                            <img src="/api/placeholder/150/150" alt="Team Member" class="rounded-full mx-auto mb-4">
+                        <img src="blankImg/icon.jpg" alt="Team Member" class="rounded-full mx-auto mb-4 w-32 h-auto">
                             <h3 class="text-xl font-bold text-gray-900">Sarah Johnson</h3>
                             <p class="text-gray-600">CTO</p>
                         </div>
                         <div class="bg-white p-6 rounded-lg shadow-lg text-center">
-                            <img src="/api/placeholder/150/150" alt="Team Member" class="rounded-full mx-auto mb-4">
+                        <img src="blankImg/icon.jpg" alt="Team Member" class="rounded-full mx-auto mb-4 w-32 h-auto">
                             <h3 class="text-xl font-bold text-gray-900">Michael Chen</h3>
                             <p class="text-gray-600">Head of Education</p>
                         </div>
