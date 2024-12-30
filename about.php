@@ -51,7 +51,8 @@ $team_members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             </div>
                         </div>
                         <div class="flex justify-center">
-                            <img src="/api/placeholder/500/300" alt="About Us" class="rounded-lg shadow-lg">
+                        <img src="blankImg/icon.jpg" alt="About Us" class="rounded-lg shadow-lg w-48 h-auto">
+
                         </div>
                     </div>
                 </div>
@@ -84,6 +85,7 @@ $team_members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <?php foreach ($team_members as $member): ?>
                         <div class="bg-white p-6 rounded-lg shadow-lg text-center">
+
                             <?php if (!empty($member['image_path'])): ?>
                                 <img src="<?php echo htmlspecialchars($member['image_path']); ?>" 
                                      alt="<?php echo htmlspecialchars($member['name']); ?>" 
@@ -114,6 +116,7 @@ $team_members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     </a>
                                 <?php endif; ?>
                             </div>
+
                         </div>
                         <?php endforeach; ?>
                     </div>
