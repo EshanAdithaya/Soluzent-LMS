@@ -363,11 +363,34 @@ $classes = $stmt->fetchAll();
                         </p>
                     </div>
                     <div id="videoInput" class="hidden">
-                        <label for="youtube_url" class="block text-sm font-medium text-gray-700">YouTube Video URL</label>
-                        <input type="url" name="youtube_url" id="youtube_url"
-                               placeholder="https://www.youtube.com/watch?v=..."
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    </div>
+    <label for="youtube_url" class="block text-sm font-medium text-gray-700">YouTube Video URL</label>
+    <input type="url" name="youtube_url" id="youtube_url"
+           placeholder="https://www.youtube.com/watch?v=..."
+           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+    <div class="mt-2">
+        <label class="block text-sm font-medium text-gray-700">Or upload video file:</label>
+        <div id="dropZone" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+            <div class="space-y-1 text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <div class="text-sm text-gray-600">
+                    <label for="video-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500">
+                        <span>Upload a video</span>
+                        <input id="video-upload" name="video" type="file" class="sr-only" accept="video/*">
+                    </label>
+                    <p class="pl-1">or drag and drop</p>
+                </div>
+                <p class="text-xs text-gray-500">MP4, MOV, AVI, WMV up to 2GB</p>
+            </div>
+        </div>
+        <div id="upload-progress" class="hidden mt-2">
+            <div class="bg-gray-200 rounded-full">
+                <div id="progress-bar" class="bg-indigo-600 text-xs text-white text-center p-0.5 leading-none rounded-full" style="width: 0%">0%</div>
+            </div>
+        </div>
+    </div>
+</div>
                 </div>
 
                 <div class="mt-6 flex justify-end space-x-3">
@@ -509,5 +532,66 @@ $classes = $stmt->fetchAll();
             }
         });
     </script>
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dropZone = document.getElementById('dropZone');
+    const videoUpload = document.getElementById('video-upload');
+    const progressBar = document.getElementById('progress-bar');
+    const uploadProgress = document.getElementById('upload-progress');
+    const youtubeUrlInput = document.getElementById('youtube_url');
+
+    function uploadVideo(file) {
+        const formData = new FormData();
+        formData.append('video', file);
+        formData.append('title', document.getElementById('title').value);
+        
+        uploadProgress.classList.remove('hidden');
+        
+        fetch('upload_video.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                youtubeUrlInput.value = data.data.url;
+                alert('Video uploaded successfully!');
+            } else {
+                throw new Error(data.error);
+            }
+        })
+        .catch(error => {
+            alert('Upload failed: ' + error.message);
+        })
+        .finally(() => {
+            uploadProgress.classList.add('hidden');
+            progressBar.style.width = '0%';
+            progressBar.textContent = '0%';
+        });
+    }
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('video/')) {
+            uploadVideo(file);
+        } else {
+            alert('Please upload a valid video file');
+        }
+    });
+
+    videoUpload.addEventListener('change', (e) => {
+        if (e.target.files[0]) {
+            uploadVideo(e.target.files[0]);
+        }
+    });
+});
+</script>
 </body>
 </html>
