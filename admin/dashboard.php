@@ -8,8 +8,7 @@ require_once 'adminSession.php';
 $isTeacher = isset($_SESSION['role']) && $_SESSION['role'] === 'teacher';
 $isAdmin = isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
 $title = $isTeacher ? 'Teacher Dashboard' : ($isAdmin ? 'Admin Dashboard' : 'User Dashboard');
-$is_dashboard_page = basename($_SERVER['APP_URL']) === 'dashboard.php';
-
+$is_dashboard_page = isset($_SERVER['APP_URL']) && basename($_SERVER['APP_URL']) === 'dashboard.php';
 try {
     if ($isTeacher) {
         // Student count query

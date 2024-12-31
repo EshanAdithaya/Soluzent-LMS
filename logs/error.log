@@ -146,24 +146,7 @@ Stack trace:
 [30-Dec-2024 11:17:55 UTC] PHP Warning:  Constant DB_USER already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 13
 [30-Dec-2024 11:17:55 UTC] PHP Warning:  Constant DB_PASS already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 14
 [30-Dec-2024 11:17:55 UTC] PHP Warning:  Constant DB_CHARSET already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 15
-[30-Dec-2024 11:17:55 UTC] PHP Warning:  Constant DB_PORT already defined in C:\xampp\htdocs\nimru-Web\signup.php on line 16
-[30-Dec-2024 16:42:26 UTC] PHP Warning:  Constant DB_HOST already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 11
-[30-Dec-2024 16:42:26 UTC] PHP Warning:  Constant DB_NAME already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 12
-[30-Dec-2024 16:42:26 UTC] PHP Warning:  Constant DB_USER already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 13
-[30-Dec-2024 16:42:26 UTC] PHP Warning:  Constant DB_PASS already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 14
-[30-Dec-2024 16:42:26 UTC] PHP Warning:  Constant DB_CHARSET already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 15
-[30-Dec-2024 16:42:26 UTC] PHP Warning:  Constant DB_PORT already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 16
-[30-Dec-2024 16:47:04 UTC] PHP Warning:  Constant DB_HOST already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 11
-[30-Dec-2024 16:47:04 UTC] PHP Warning:  Constant DB_NAME already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 12
-[30-Dec-2024 16:47:04 UTC] PHP Warning:  Constant DB_USER already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 13
-[30-Dec-2024 16:47:04 UTC] PHP Warning:  Constant DB_PASS already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 14
-[30-Dec-2024 16:47:04 UTC] PHP Warning:  Constant DB_CHARSET already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 15
-[30-Dec-2024 16:47:04 UTC] PHP Warning:  Constant DB_PORT already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 16
-[30-Dec-2024 16:47:40 UTC] PHP Warning:  Constant DB_HOST already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 11
-[30-Dec-2024 16:47:40 UTC] PHP Warning:  Constant DB_NAME already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 12
-[30-Dec-2024 16:47:40 UTC] PHP Warning:  Constant DB_USER already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 13
-[30-Dec-2024 16:47:40 UTC] PHP Warning:  Constant DB_PASS already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 14
-[30-Dec-2024 16:47:40 UTC] PHP Warning:  Constant DB_CHARSET already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 15
-[30-Dec-2024 16:47:40 UTC] PHP Warning:  Constant DB_PORT already defined in C:\xampp\htdocs\github\nimru-Web\signup.php on line 16
-[30-Dec-2024 16:47:42 UTC] PHP Deprecated:  Constant FILTER_SANITIZE_STRING is deprecated in C:\xampp\htdocs\github\nimru-Web\signup.php on line 87
-[30-Dec-2024 16:47:42 UTC] PHP Deprecated:  Constant FILTER_SANITIZE_STRING is deprecated in C:\xampp\htdocs\github\nimru-Web\signup.php on line 89
+
+[30-Dec-2024 15:47:47 UTC] User data loaded successfully
+[30-Dec-2024 15:48:45 UTC] User data loaded successfully
+[30-Dec-2024 15:49:03 UTC] User data loaded successfully
