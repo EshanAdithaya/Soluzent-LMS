@@ -1,0 +1,1 @@
+https://accounts.google.com/o/oauth2/auth?response_type=code&client_id=86207171775-l2sljtpkjk22ckj6mjp7jeumiqefrvav.apps.googleusercontent.com&redirect_uri=http://localhost/nimru-Web/generate_token.php&scope=https://www.googleapis.com/auth/youtube.upload+https://www.googleapis.com/auth/youtube&access_type=offline&approval_prompt=force
