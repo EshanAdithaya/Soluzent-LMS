@@ -79,9 +79,10 @@ $response = ['success' => false, 'message' => ''];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Verify reCAPTCHA first
-    if (!isset($_POST['g-recaptcha-response']) || !verifyRecaptcha($_POST['g-recaptcha-response'])) {
-        $response['message'] = 'Please complete the reCAPTCHA verification.';
-    } else {
+    // if (!isset($_POST['g-recaptcha-response']) || !verifyRecaptcha($_POST['g-recaptcha-response'])) {
+    //     $response['message'] = 'Please complete the reCAPTCHA verification.';
+    // } else {
+    
         // Sanitize inputs
         $name = filter_var($_POST['name'], FILTER_SANITIZE_STRING);
         $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
@@ -177,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
-}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -276,11 +277,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const loadingIcon = document.getElementById('loadingIcon');
             
             // Check reCAPTCHA
-            if (!grecaptcha.getResponse()) {
-                e.preventDefault();
-                alert('Please complete the reCAPTCHA verification.');
-                return false;
-            }
+            // if (!grecaptcha.getResponse()) {
+            //     e.preventDefault();
+            //     alert('Please complete the reCAPTCHA verification.');
+            //     return false;
+            // }
 
             // Show loading state
             buttonText.textContent = 'Creating Account...';

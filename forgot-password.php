@@ -1,38 +1,37 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+
 require_once 'asset/php/config.php';
 require_once 'asset/php/db.php';
-require_once 'EmailSender.php';
+require_once 'emailSender.php';
 
-// Function to handle password reset request
 function handlePasswordReset($email, $pdo) {
+    error_log("Received password reset request for email: $email");
     $response = ['success' => false, 'message' => ''];
-    
+
     if (!is_valid_email($email)) {
         $response['message'] = 'Please enter a valid email address';
         return $response;
     }
-    
+
     try {
-        // Check if email exists
+        // Set the timezone to Sri Lanka
+        date_default_timezone_set('Asia/Colombo');
+
         $stmt = $pdo->prepare('SELECT id FROM users WHERE email = ?');
         $stmt->execute([$email]);
         $user = $stmt->fetch();
-        
+
         if ($user) {
-            // Generate token using the helper function from config
             $token = generate_random_string(32);
             
-            // Store token in database with 1 hour expiry
-            $stmt = $pdo->prepare('INSERT INTO reset_tokens (user_id, token, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 HOUR))');
-            $stmt->execute([$user['id'], $token]);
-            
-            // Build reset URL
+            // Calculate expiration time
+            $expiresAt = (new DateTime())->add(new DateInterval('PT1H'))->format('Y-m-d H:i:s');
+
+            // Insert the reset token with the calculated expiration time
+            $stmt = $pdo->prepare('INSERT INTO reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)');
+            $stmt->execute([$user['id'], $token, $expiresAt]);
+
             $resetUrl = APP_URL . '/reset-password.php?token=' . $token;
-            
-            // Send email
             $emailSender = new EmailSender();
             if ($emailSender->sendPasswordResetEmail($email, $resetUrl)) {
                 $response = [
@@ -41,21 +40,18 @@ function handlePasswordReset($email, $pdo) {
                 ];
             } else {
                 $response['message'] = 'Failed to send reset email. Please try again later.';
-                error_log("Failed to send password reset email to: $email");
             }
         } else {
-            // For security, don't reveal if email exists
             $response = [
                 'success' => true,
                 'message' => 'If an account exists with this email, you will receive password reset instructions.'
             ];
-            error_log("Password reset attempted for non-existent email: $email");
         }
     } catch (Exception $e) {
-        error_log('Password Reset Error: ' . $e->getMessage());
-        $response['message'] = 'An error occurred. Please try again later.';
+        error_log('Password Reset Error: ' . $e->getMessage()); // Log the error message
+        $response['message'] = 'An error occurred: ' . $e->getMessage(); // Provide more detail for debugging
     }
-    
+
     return $response;
 }
 
@@ -75,6 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
