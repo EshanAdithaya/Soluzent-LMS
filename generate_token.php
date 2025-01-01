@@ -9,7 +9,7 @@ $client->setScopes([
 ]);
 
 try {
-    $code = '4/0AanRRrtjeR0ZTTm1fJvCM5YXDwZIYD6cZwHraTrFgPSKCjokPtVx5QSlvwNtfmrIjARYmQ';
+    $code = '4/0AanRRrunj0aVrotKHz8VnZlL_hjwiHXdPSTDbE5gFIJcDoJLQPU5nFxnzYoCH6bIhnNQ5A';
     $accessToken = $client->fetchAccessTokenWithAuthCode($code);
     
     if (isset($accessToken['access_token'])) {
