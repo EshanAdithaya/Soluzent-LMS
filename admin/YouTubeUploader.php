@@ -1,22 +1,30 @@
 <?php
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
+use Google_Client;
+use Google_Service_YouTube;
+use Google_Service_YouTube_VideoSnippet;
+use Google_Service_YouTube_VideoStatus;
+use Google_Service_YouTube_Video;
+use Google_Service_Exception;
+use Exception;
+
 class YouTubeUploader {
-   private $client;
-   private $youtube;
-   private $tokenPath;
-   private $clientSecretPath;
+    private $client;
+    private $youtube;
+    private $tokenPath;
+    private $clientSecretPath;
 
-   public function __construct() {
-       $this->tokenPath = dirname(__DIR__) . '/youtube_token.json';
-       $this->clientSecretPath = dirname(__DIR__) . '/client_secret.json';
+    public function __construct() {
+        $this->tokenPath = dirname(__DIR__) . '/youtube_token.json';
+        $this->clientSecretPath = dirname(__DIR__) . '/client_secret.json';
 
-       if (!file_exists($this->clientSecretPath)) {
-           throw new Exception('client_secret.json not found');
-       }
+        if (!file_exists($this->clientSecretPath)) {
+            throw new Exception('client_secret.json not found');
+        }
 
-       $this->initializeClient();
-   }
+        $this->initializeClient();
+    }
 
    private function initializeClient() {
        $this->client = new Google_Client();

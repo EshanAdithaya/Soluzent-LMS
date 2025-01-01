@@ -2,6 +2,7 @@
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 require_once '../asset/php/config.php';
 require_once 'adminSession.php';
+require_once 'YouTubeUploader.php';  // Updated path
 
 // Enable error logging to a file
 ini_set('log_errors', 1);
@@ -28,6 +29,7 @@ class VideoUploadHandler {
             // Log initialization
             error_log("Initializing VideoUploadHandler");
             
+            // Updated class check
             if (!class_exists('YouTubeUploader')) {
                 throw new Exception('YouTubeUploader class not found');
             }
