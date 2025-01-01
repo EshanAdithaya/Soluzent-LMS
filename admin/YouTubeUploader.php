@@ -30,7 +30,8 @@ class YouTubeUploader {
         try {
             $this->client = new Google_Client();
             $this->client->setAuthConfig($this->clientSecretPath);
-            $this->client->setRedirectUri('http://localhost/nimru-Web/generate_token.php');
+            // Updated redirect URI to match your production domain
+            $this->client->setRedirectUri('https://crysteapi.my.id/admin/generate_token.php');
             $this->client->setScopes([
                 'https://www.googleapis.com/auth/youtube.upload',
                 'https://www.googleapis.com/auth/youtube'
