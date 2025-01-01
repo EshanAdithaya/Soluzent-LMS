@@ -130,6 +130,8 @@ class YouTubeUploader {
             if (file_put_contents($this->tokenPath, json_encode($token)) === false) {
                 throw new Exception('Failed to save new token');
             }
+
+            $this->client->setAccessToken($token);
         } catch (Exception $e) {
             error_log("Initial authorization failed: " . $e->getMessage());
             throw new Exception('Authorization failed: ' . $e->getMessage());
@@ -140,6 +142,11 @@ class YouTubeUploader {
         try {
             if (!file_exists($file['tmp_name'])) {
                 throw new Exception('Video file not found at temporary location');
+            }
+
+            $fileContent = file_get_contents($file['tmp_name']);
+            if ($fileContent === false) {
+                throw new Exception('Failed to read video file');
             }
 
             $snippet = new Google_Service_YouTube_VideoSnippet();
@@ -159,7 +166,7 @@ class YouTubeUploader {
                 'snippet,status',
                 $video,
                 array(
-                    'data' => file_get_contents($file['tmp_name']),
+                    'data' => $fileContent,
                     'mimeType' => $file['type'],
                     'uploadType' => 'multipart'
                 )
@@ -174,15 +181,27 @@ class YouTubeUploader {
             return [
                 'success' => true,
                 'id' => $response->getId(),
-                'url' => "https://www.youtube.com/watch?v=" . $response->getId()
+                'url' => "https://www.youtube.com/watch?v=" . $response->getId(),
+                'debug_info' => [
+                    'file_size' => strlen($fileContent),
+                    'mime_type' => $file['type'],
+                    'response' => json_encode($response)
+                ]
             ];
         } catch (Google_Service_Exception $e) {
-            $error = json_decode($e->getMessage(), true);
-            $errorMessage = isset($error['error']['message']) 
-                ? $error['error']['message'] 
-                : $e->getMessage();
+            $errorBody = $e->getMessage();
+            error_log("YouTube API error (raw): " . $errorBody);
+            
+            try {
+                $errorData = json_decode($errorBody, true);
+                $errorMessage = isset($errorData['error']['message']) 
+                    ? $errorData['error']['message'] 
+                    : $errorBody;
+            } catch (Exception $jsonError) {
+                $errorMessage = $errorBody;
+            }
                 
-            error_log("YouTube API error: " . $errorMessage);
+            error_log("YouTube API error (processed): " . $errorMessage);
             throw new Exception('YouTube API error: ' . $errorMessage);
         } catch (Exception $e) {
             error_log("Upload error: " . $e->getMessage());
