@@ -20,112 +20,173 @@ class YouTubeUploader {
         $this->clientSecretPath = dirname(__DIR__) . '/client_secret.json';
 
         if (!file_exists($this->clientSecretPath)) {
-            throw new Exception('client_secret.json not found');
+            throw new Exception('YouTube API credentials not found: client_secret.json is missing');
         }
 
         $this->initializeClient();
     }
 
-   private function initializeClient() {
-       $this->client = new Google_Client();
-       $this->client->setAuthConfig($this->clientSecretPath);
-       $this->client->setRedirectUri('http://localhost/nimru-Web/generate_token.php');
-       $this->client->setScopes([
-           'https://www.googleapis.com/auth/youtube.upload',
-           'https://www.googleapis.com/auth/youtube'
-       ]);
-       $this->client->setAccessType('offline');
-       $this->client->setPrompt('consent');
+    private function initializeClient() {
+        try {
+            $this->client = new Google_Client();
+            $this->client->setAuthConfig($this->clientSecretPath);
+            $this->client->setRedirectUri('http://localhost/nimru-Web/generate_token.php');
+            $this->client->setScopes([
+                'https://www.googleapis.com/auth/youtube.upload',
+                'https://www.googleapis.com/auth/youtube'
+            ]);
+            $this->client->setAccessType('offline');
+            $this->client->setPrompt('consent');
 
-       $this->validateAndSetToken();
-       $this->youtube = new Google_Service_YouTube($this->client);
-   }
+            $this->validateAndSetToken();
+            $this->youtube = new Google_Service_YouTube($this->client);
+        } catch (Exception $e) {
+            error_log("YouTube client initialization failed: " . $e->getMessage());
+            throw new Exception('Failed to initialize YouTube client: ' . $e->getMessage());
+        }
+    }
 
-   private function validateAndSetToken() {
-       if (!file_exists($this->tokenPath)) {
-           $this->handleInitialAuth();
-           return;
-       }
+    private function validateAndSetToken() {
+        try {
+            if (!file_exists($this->tokenPath)) {
+                error_log("Token file not found at: " . $this->tokenPath);
+                $this->handleInitialAuth();
+                return;
+            }
 
-       $token = json_decode(file_get_contents($this->tokenPath), true);
-       if (!$this->isValidToken($token)) {
-           throw new Exception('Invalid token format');
-       }
+            $tokenContent = file_get_contents($this->tokenPath);
+            if ($tokenContent === false) {
+                throw new Exception("Could not read token file");
+            }
 
-       $this->client->setAccessToken($token);
-       if ($this->client->isAccessTokenExpired()) {
-           if ($this->client->getRefreshToken()) {
-               try {
-                   $this->client->fetchAccessTokenWithRefreshToken($this->client->getRefreshToken());
-                   file_put_contents($this->tokenPath, json_encode($this->client->getAccessToken()));
-               } catch (Exception $e) {
-                   $this->handleInitialAuth();
-               }
-           } else {
-               $this->handleInitialAuth();
-           }
-       }
-   }
+            $token = json_decode($tokenContent, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new Exception("Token file contains invalid JSON: " . json_last_error_msg());
+            }
 
-   private function isValidToken($token) {
-       return is_array($token) && 
-              isset($token['access_token']) && 
-              isset($token['token_type']);
-   }
+            if (!$this->isValidToken($token)) {
+                throw new Exception('Invalid token format in token file');
+            }
 
-   private function handleInitialAuth() {
-       if (isset($_GET['code'])) {
-           try {
-               $token = $this->client->fetchAccessTokenWithAuthCode($_GET['code']);
-               if (isset($token['access_token'])) {
-                   file_put_contents($this->tokenPath, json_encode($token));
-               } else {
-                   throw new Exception('No access token received');
-               }
-           } catch (Exception $e) {
-               throw new Exception('Authorization failed: ' . $e->getMessage());
-           }
-       } else {
-           $authUrl = $this->client->createAuthUrl();
-           header('Location: ' . $authUrl);
-           exit;
-       }
-   }
+            $this->client->setAccessToken($token);
+            
+            if ($this->client->isAccessTokenExpired()) {
+                if (!$this->client->getRefreshToken()) {
+                    error_log("No refresh token available, initiating new auth flow");
+                    $this->handleInitialAuth();
+                    return;
+                }
 
-   public function uploadVideo($file, $title, $description = '') {
-       if (!file_exists($file['tmp_name'])) {
-           throw new Exception('Video file not found');
-       }
+                error_log("Access token expired, attempting refresh");
+                $this->refreshAccessToken();
+            }
+        } catch (Exception $e) {
+            error_log("Token validation failed: " . $e->getMessage());
+            throw $e;
+        }
+    }
 
-       $snippet = new Google_Service_YouTube_VideoSnippet();
-       $snippet->setTitle($title);
-       $snippet->setDescription($description);
+    private function refreshAccessToken() {
+        try {
+            $this->client->fetchAccessTokenWithRefreshToken($this->client->getRefreshToken());
+            $newToken = $this->client->getAccessToken();
+            
+            if (!$this->isValidToken($newToken)) {
+                throw new Exception('Received invalid token during refresh');
+            }
+            
+            if (file_put_contents($this->tokenPath, json_encode($newToken)) === false) {
+                throw new Exception('Failed to save refreshed token');
+            }
+        } catch (Exception $e) {
+            error_log("Token refresh failed: " . $e->getMessage());
+            $this->handleInitialAuth();
+        }
+    }
 
-       $status = new Google_Service_YouTube_VideoStatus();
-       $status->setPrivacyStatus('unlisted');
+    private function isValidToken($token) {
+        return is_array($token) && 
+               isset($token['access_token']) && 
+               isset($token['token_type']) &&
+               !empty($token['access_token']) &&
+               !empty($token['token_type']);
+    }
 
-       $video = new Google_Service_YouTube_Video();
-       $video->setSnippet($snippet);
-       $video->setStatus($status);
+    private function handleInitialAuth() {
+        if (!isset($_GET['code'])) {
+            $authUrl = $this->client->createAuthUrl();
+            error_log("Redirecting to auth URL: " . $authUrl);
+            header('Location: ' . filter_var($authUrl, FILTER_SANITIZE_URL));
+            exit;
+        }
 
-       try {
-           $response = $this->youtube->videos->insert(
-               'snippet,status',
-               $video,
-               array(
-                   'data' => file_get_contents($file['tmp_name']),
-                   'mimeType' => $file['type'],
-                   'uploadType' => 'multipart'
-               )
-           );
+        try {
+            $token = $this->client->fetchAccessTokenWithAuthCode($_GET['code']);
+            
+            if (!isset($token['access_token'])) {
+                throw new Exception('No access token received from Google');
+            }
 
-           return [
-               'success' => true,
-               'id' => $response->getId(),
-               'url' => "https://www.youtube.com/watch?v=" . $response->getId()
-           ];
-       } catch (Google_Service_Exception $e) {
-           throw new Exception('Upload failed: ' . $e->getMessage());
-       }
-   }
+            if (file_put_contents($this->tokenPath, json_encode($token)) === false) {
+                throw new Exception('Failed to save new token');
+            }
+        } catch (Exception $e) {
+            error_log("Initial authorization failed: " . $e->getMessage());
+            throw new Exception('Authorization failed: ' . $e->getMessage());
+        }
+    }
+
+    public function uploadVideo($file, $title, $description = '') {
+        try {
+            if (!file_exists($file['tmp_name'])) {
+                throw new Exception('Video file not found at temporary location');
+            }
+
+            $snippet = new Google_Service_YouTube_VideoSnippet();
+            $snippet->setTitle($title);
+            $snippet->setDescription($description);
+
+            $status = new Google_Service_YouTube_VideoStatus();
+            $status->setPrivacyStatus('unlisted');
+
+            $video = new Google_Service_YouTube_Video();
+            $video->setSnippet($snippet);
+            $video->setStatus($status);
+
+            error_log("Attempting to upload video: " . $title);
+            
+            $response = $this->youtube->videos->insert(
+                'snippet,status',
+                $video,
+                array(
+                    'data' => file_get_contents($file['tmp_name']),
+                    'mimeType' => $file['type'],
+                    'uploadType' => 'multipart'
+                )
+            );
+
+            if (!$response || !$response->getId()) {
+                throw new Exception('Upload completed but no video ID received');
+            }
+
+            error_log("Video upload successful. ID: " . $response->getId());
+            
+            return [
+                'success' => true,
+                'id' => $response->getId(),
+                'url' => "https://www.youtube.com/watch?v=" . $response->getId()
+            ];
+        } catch (Google_Service_Exception $e) {
+            $error = json_decode($e->getMessage(), true);
+            $errorMessage = isset($error['error']['message']) 
+                ? $error['error']['message'] 
+                : $e->getMessage();
+                
+            error_log("YouTube API error: " . $errorMessage);
+            throw new Exception('YouTube API error: ' . $errorMessage);
+        } catch (Exception $e) {
+            error_log("Upload error: " . $e->getMessage());
+            throw new Exception('Upload failed: ' . $e->getMessage());
+        }
+    }
 }
