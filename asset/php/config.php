@@ -35,7 +35,7 @@ define('DB_PASS', 'AVNS_l3SW8eljPIvmmGNUCFK');
 define('DB_CHARSET', 'utf8mb4');
 define('DB_PORT', 25060);
 // define('APP_URL', 'https://plankton-app-us3aj.ondigitalocean.app');
-define('APP_URL', 'http://161.35.63.178/nimru-Web');
+define('APP_URL', 'https://crysteapi.my.id');
 
 // Application Settings
 define('APP_NAME', 'EduPortal');
