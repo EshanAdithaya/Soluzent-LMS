@@ -1,0 +1,33 @@
+name: Build and Deploy PHP Website
+
+on:
+  push:
+    branches:
+      - main  # You can change this to your branch name
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out the repository
+      uses: actions/checkout@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Set up Google Cloud credentials
+      run: |
+        echo "${{ secrets.GCP_CREDENTIALS }}" > /tmp/gcp-credentials.json
+        export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-credentials.json
+
+    - name: Build and push Docker image
+      run: |
+        docker build -t your-dockerhub-username/php-website:latest .
+        docker push your-dockerhub-username/php-website:latest
