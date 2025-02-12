@@ -35,7 +35,7 @@ define('DB_PASS', '');
 define('DB_CHARSET', 'utf8mb4');
 define('DB_PORT', 8080);
 // define('APP_URL', 'https://plankton-app-us3aj.ondigitalocean.app');
-define('APP_URL', 'https://crysteapi.my.id');
+define('APP_URL', 'http://194.163.171.218');
 
 // Application Settings
 define('APP_NAME', 'EduPortal');
