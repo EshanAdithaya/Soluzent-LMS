@@ -28,10 +28,10 @@ ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/error.log');
 
 // Database Configuration
-define('DB_HOST', 'http://152.42.223.81:8080/index.php');
+define('DB_HOST', 'mysql');
 define('DB_NAME', 'lms');
 define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_PASS', 'Black@123');
 define('DB_CHARSET', 'utf8mb4');
 define('DB_PORT', 3306);
 // define('APP_URL', 'https://plankton-app-us3aj.ondigitalocean.app');
