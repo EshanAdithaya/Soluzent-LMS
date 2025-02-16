@@ -31,7 +31,7 @@ ini_set('error_log', __DIR__ . '/../logs/error.log');
 define('DB_HOST', '152.42.223.81');
 define('DB_NAME', 'lms');
 define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_PASS', 'Eshan');
 // define('DB_PASS', 'Black@123');
 define('DB_CHARSET', 'utf8mb4');
 define('DB_PORT', 3306);
