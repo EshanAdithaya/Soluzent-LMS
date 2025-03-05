@@ -28,11 +28,11 @@ ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/error.log');
 
 // Database Configuration
-define('DB_HOST', '152.42.223.81');
+define('DB_HOST', '194.163.171.218');
 define('DB_NAME', 'lms');
 define('DB_USER', 'root');
-define('DB_PASS', 'Eshan');
-// define('DB_PASS', 'Black@123');
+//define('DB_PASS', 'Eshan');
+define('DB_PASS', 'Black@123');
 define('DB_CHARSET', 'utf8mb4');
 define('DB_PORT', 3306);
 // define('APP_URL', 'https://plankton-app-us3aj.ondigitalocean.app');
