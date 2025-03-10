@@ -72,7 +72,7 @@ $this->currentPage = basename($_SERVER['REQUEST_URI']); // Use REQUEST_URI as a 
     <title>LMS Navigation</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="asset/css/christmas-theme.css">
-    <script src="asset/js/christmas-snow.js"></script>
+    <!-- <script src="asset/js/christmas-snow.js"></script> -->
     <!-- <script src="asset/js/devtools-prevention.js"></script> -->
 </head>
 <body>
