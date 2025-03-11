@@ -15,29 +15,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Check if this is a folder or regular class
                 $isFolder = isset($_POST['is_folder']) && $_POST['is_folder'] == '1';
-                $parentId = !empty($_POST['parent_id']) ? $_POST['parent_id'] : null;
+                $parentId = !empty($_POST['parent_id']) ? intval($_POST['parent_id']) : null;
                 
-                $stmt = $pdo->prepare("INSERT INTO classes (name, description, created_by, parent_id, is_folder) VALUES (?, ?, ?, ?, ?)");
-                $stmt->execute([
+                // Debug logging
+                error_log("Creating " . ($isFolder ? "folder" : "class") . ": " . $_POST['name']);
+                error_log("Parent ID: " . ($parentId ? $parentId : "NULL"));
+                
+                // Validate parent folder exists if specified
+                if ($parentId) {
+                    $checkParent = $pdo->prepare("SELECT id, is_folder FROM classes WHERE id = ?");
+                    $checkParent->execute([$parentId]);
+                    $parent = $checkParent->fetch(PDO::FETCH_ASSOC);
+                    
+                    if (!$parent) {
+                        throw new Exception("Parent folder not found");
+                    }
+                    
+                    if (!$parent['is_folder']) {
+                        throw new Exception("Parent must be a folder, not a class");
+                    }
+                }
+                
+                // Create the class/folder with proper error handling
+                $stmt = $pdo->prepare("
+                    INSERT INTO classes (name, description, created_by, parent_id, is_folder) 
+                    VALUES (?, ?, ?, ?, ?)
+                ");
+                
+                if (!$stmt->execute([
                     $_POST['name'], 
                     $_POST['description'], 
                     $_SESSION['user_id'],
                     $parentId,
-                    $isFolder
-                ]);
+                    $isFolder ? 1 : 0
+                ])) {
+                    throw new Exception("Database error creating " . ($isFolder ? "folder" : "class"));
+                }
+                
                 $classId = $pdo->lastInsertId();
                 
-                $stmt = $pdo->prepare("INSERT INTO teacher_classes (teacher_id, class_id, is_owner, can_modify) VALUES (?, ?, true, true)");
-                $stmt->execute([$_SESSION['user_id'], $classId]);
+                // Associate the class with the teacher
+                $stmt = $pdo->prepare("
+                    INSERT INTO teacher_classes (teacher_id, class_id, is_owner, can_modify) 
+                    VALUES (?, ?, true, true)
+                ");
+                
+                if (!$stmt->execute([$_SESSION['user_id'], $classId])) {
+                    throw new Exception("Database error associating teacher with " . ($isFolder ? "folder" : "class"));
+                }
                 
                 $pdo->commit();
                 $_SESSION['success'] = $isFolder ? "Folder created successfully" : "Class created successfully";
                 header('Location: classes.php');
                 exit;
-            } catch (PDOException $e) {
+            } catch (Exception $e) {
                 $pdo->rollBack();
-                error_log($e->getMessage());
-                $_SESSION['error'] = "Error creating " . ($isFolder ? "folder" : "class");
+                error_log("Error creating " . ($isFolder ? "folder" : "class") . ": " . $e->getMessage());
+                $_SESSION['error'] = "Error creating " . ($isFolder ? "folder" : "class") . ": " . $e->getMessage();
                 header('Location: classes.php');
                 exit;
             }
@@ -252,7 +286,7 @@ if ($_SESSION['role'] === 'teacher') {
         ORDER BY c.is_folder DESC, c.name
     ");
     $stmt->execute([$_SESSION['user_id'], $_SESSION['user_id']]);
-    $classes = $stmt->fetchAll();
+    $classesRaw = $stmt->fetchAll();
 
     // Fetch only connected students
     $stmt = $pdo->prepare("
@@ -276,11 +310,31 @@ if ($_SESSION['role'] === 'teacher') {
         GROUP BY c.id 
         ORDER BY c.is_folder DESC, c.name
     ");
-    $classes = $stmt->fetchAll();
+    $classesRaw = $stmt->fetchAll();
 
     $stmt = $pdo->query("SELECT id, name, email FROM users WHERE role = 'student' ORDER BY name");
 }
 $students = $stmt->fetchAll();
+
+// Build hierarchical class structure
+function buildClassHierarchy($classes, $parentId = null, $level = 0) {
+    $result = [];
+    foreach ($classes as $class) {
+        if ($class['parent_id'] == $parentId) {
+            $class['level'] = $level;
+            $result[] = $class;
+            if ($class['is_folder']) {
+                $children = buildClassHierarchy($classes, $class['id'], $level + 1);
+                $result = array_merge($result, $children);
+            }
+        }
+    }
+    return $result;
+}
+
+// Build the hierarchical class structure
+$classes = buildClassHierarchy($classesRaw);
+
 ?>
 
 <!DOCTYPE html>
@@ -344,12 +398,14 @@ $students = $stmt->fetchAll();
                     <?php foreach ($classes as $class): ?>
                     <tr class="<?= $class['is_folder'] ? 'bg-blue-50' : '' ?>">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            <?php if ($class['is_folder']): ?>
-                                <i class="fas fa-folder text-yellow-500 mr-2"></i>
-                            <?php else: ?>
-                                <i class="fas fa-book text-indigo-500 mr-2"></i>
-                            <?php endif; ?>
-                            <?= htmlspecialchars($class['name']) ?>
+                            <div style="padding-left: <?= $class['level'] * 20 ?>px;">
+                                <?php if ($class['is_folder']): ?>
+                                    <i class="fas fa-folder text-yellow-500 mr-2"></i>
+                                <?php else: ?>
+                                    <i class="fas fa-book text-indigo-500 mr-2"></i>
+                                <?php endif; ?>
+                                <?= htmlspecialchars($class['name']) ?>
+                            </div>
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-500">
                             <?= $class['is_folder'] ? 'Folder' : 'Class' ?>
