@@ -9,50 +9,119 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
     switch ($action) {
-        case 'create':
+        case 'create_folder':
             try {
                 $pdo->beginTransaction();
                 
-                // Check if this is a folder or regular class
-                $isFolder = isset($_POST['is_folder']) && $_POST['is_folder'] == '1';
                 $parentId = !empty($_POST['parent_id']) ? intval($_POST['parent_id']) : null;
-                
-                // Debug logging
-                error_log("Creating " . ($isFolder ? "folder" : "class") . ": " . $_POST['name']);
-                error_log("Parent ID: " . ($parentId ? $parentId : "NULL"));
                 
                 // Validate parent folder exists if specified
                 if ($parentId) {
-                    $checkParent = $pdo->prepare("SELECT id, is_folder FROM classes WHERE id = ?");
+                    $checkParent = $pdo->prepare("SELECT id FROM folders WHERE id = ?");
                     $checkParent->execute([$parentId]);
                     $parent = $checkParent->fetch(PDO::FETCH_ASSOC);
                     
                     if (!$parent) {
                         throw new Exception("Parent folder not found");
                     }
-                    
-                    if (!$parent['is_folder']) {
-                        throw new Exception("Parent must be a folder, not a class");
-                    }
                 }
                 
-                // Create the class/folder with proper error handling
+                // Create the folder
                 $stmt = $pdo->prepare("
-                    INSERT INTO classes (name, description, created_by, parent_id, is_folder) 
-                    VALUES (?, ?, ?, ?, ?)
+                    INSERT INTO folders (name, description, parent_id, created_by) 
+                    VALUES (?, ?, ?, ?)
                 ");
                 
                 if (!$stmt->execute([
                     $_POST['name'], 
                     $_POST['description'], 
-                    $_SESSION['user_id'],
                     $parentId,
-                    $isFolder ? 1 : 0
+                    $_SESSION['user_id']
                 ])) {
-                    throw new Exception("Database error creating " . ($isFolder ? "folder" : "class"));
+                    throw new Exception("Database error creating folder");
                 }
                 
-                $classId = $pdo->lastInsertId();
+                $pdo->commit();
+                $_SESSION['success'] = "Folder created successfully";
+                header('Location: classes.php');
+                exit;
+            } catch (Exception $e) {
+                $pdo->rollBack();
+                error_log("Error creating folder: " . $e->getMessage());
+                $_SESSION['error'] = "Error creating folder: " . $e->getMessage();
+                header('Location: classes.php');
+                exit;
+            }
+            break;
+
+        case 'create_class':
+            try {
+                $pdo->beginTransaction();
+                
+                // Instead of using parent_id directly, store the folder ID in a different way
+                // This can be in a separate column or in a related table
+                $folderId = !empty($_POST['folder_id']) ? intval($_POST['folder_id']) : null;
+                
+                // Validate folder exists if specified
+                if ($folderId) {
+                    $checkFolder = $pdo->prepare("SELECT id FROM folders WHERE id = ?");
+                    $checkFolder->execute([$folderId]);
+                    $folder = $checkFolder->fetch(PDO::FETCH_ASSOC);
+                    
+                    if (!$folder) {
+                        throw new Exception("Folder not found");
+                    }
+                    
+                    // Create the class with null parent_id (don't use the folder_id as parent_id)
+                    $stmt = $pdo->prepare("
+                        INSERT INTO classes (name, description, created_by, is_folder) 
+                        VALUES (?, ?, ?, 0)
+                    ");
+                    
+                    if (!$stmt->execute([
+                        $_POST['name'], 
+                        $_POST['description'], 
+                        $_SESSION['user_id']
+                    ])) {
+                        throw new Exception("Database error creating class");
+                    }
+                    
+                    $classId = $pdo->lastInsertId();
+                    
+                    // Create a class-folder relationship in a new table or another way
+                    // For now, since we don't have a dedicated table, let's use a naming convention or metadata
+                    // You might want to create a class_folders table later
+                    
+                    // Track the folder relationship separately
+                    $stmt = $pdo->prepare("
+                        UPDATE classes 
+                        SET folder_id = ? 
+                        WHERE id = ?
+                    ");
+                    
+                    // Modify this based on your actual database structure
+                    // This assumes you've added a folder_id column to the classes table
+                    if (!$stmt->execute([$folderId, $classId])) {
+                        throw new Exception("Database error associating class with folder");
+                    }
+                    
+                } else {
+                    // Create the class without a folder association
+                    $stmt = $pdo->prepare("
+                        INSERT INTO classes (name, description, created_by, is_folder) 
+                        VALUES (?, ?, ?, 0)
+                    ");
+                    
+                    if (!$stmt->execute([
+                        $_POST['name'], 
+                        $_POST['description'], 
+                        $_SESSION['user_id']
+                    ])) {
+                        throw new Exception("Database error creating class");
+                    }
+                    
+                    $classId = $pdo->lastInsertId();
+                }
                 
                 // Associate the class with the teacher
                 $stmt = $pdo->prepare("
@@ -61,81 +130,193 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ");
                 
                 if (!$stmt->execute([$_SESSION['user_id'], $classId])) {
-                    throw new Exception("Database error associating teacher with " . ($isFolder ? "folder" : "class"));
+                    throw new Exception("Database error associating teacher with class");
                 }
                 
                 $pdo->commit();
-                $_SESSION['success'] = $isFolder ? "Folder created successfully" : "Class created successfully";
+                $_SESSION['success'] = "Class created successfully";
                 header('Location: classes.php');
                 exit;
             } catch (Exception $e) {
                 $pdo->rollBack();
-                error_log("Error creating " . ($isFolder ? "folder" : "class") . ": " . $e->getMessage());
-                $_SESSION['error'] = "Error creating " . ($isFolder ? "folder" : "class") . ": " . $e->getMessage();
+                error_log("Error creating class: " . $e->getMessage());
+                $_SESSION['error'] = "Error creating class: " . $e->getMessage();
                 header('Location: classes.php');
                 exit;
             }
             break;
 
-        case 'update':
+        case 'update_folder':
             try {
                 $pdo->beginTransaction();
                 
-                // Get the class details to check if it's a folder
-                $stmt = $pdo->prepare("SELECT is_folder FROM classes WHERE id = ?");
-                $stmt->execute([$_POST['class_id']]);
-                $isFolder = $stmt->fetchColumn();
+                $parentId = !empty($_POST['parent_id']) ? intval($_POST['parent_id']) : null;
                 
-                // Update the class/folder details
-                $stmt = $pdo->prepare("UPDATE classes SET name = ?, description = ?, parent_id = ? WHERE id = ?");
-                $stmt->execute([
+                // Validate parent folder exists if specified
+                if ($parentId) {
+                    $checkParent = $pdo->prepare("SELECT id FROM folders WHERE id = ?");
+                    $checkParent->execute([$parentId]);
+                    $parent = $checkParent->fetch(PDO::FETCH_ASSOC);
+                    
+                    if (!$parent) {
+                        throw new Exception("Parent folder not found");
+                    }
+                    
+                    // Prevent circular references
+                    if ($parentId == $_POST['folder_id']) {
+                        throw new Exception("A folder cannot be its own parent");
+                    }
+                    
+                    // Check for deeper circular references
+                    $currentParentId = $parentId;
+                    while ($currentParentId !== null) {
+                        $checkAncestor = $pdo->prepare("SELECT parent_id FROM folders WHERE id = ?");
+                        $checkAncestor->execute([$currentParentId]);
+                        $ancestor = $checkAncestor->fetch(PDO::FETCH_ASSOC);
+                        
+                        if (!$ancestor) {
+                            break;
+                        }
+                        
+                        if ($ancestor['parent_id'] == $_POST['folder_id']) {
+                            throw new Exception("Cannot create circular folder references");
+                        }
+                        
+                        $currentParentId = $ancestor['parent_id'];
+                    }
+                }
+                
+                // Update the folder
+                $stmt = $pdo->prepare("
+                    UPDATE folders 
+                    SET name = ?, description = ?, parent_id = ?
+                    WHERE id = ?
+                ");
+                
+                if (!$stmt->execute([
                     $_POST['name'], 
                     $_POST['description'], 
-                    !empty($_POST['parent_id']) ? $_POST['parent_id'] : null,
-                    $_POST['class_id']
-                ]);
+                    $parentId,
+                    $_POST['folder_id']
+                ])) {
+                    throw new Exception("Database error updating folder");
+                }
                 
                 $pdo->commit();
-                $_SESSION['success'] = $isFolder ? "Folder updated successfully" : "Class updated successfully";
-            } catch (PDOException $e) {
+                $_SESSION['success'] = "Folder updated successfully";
+                header('Location: classes.php');
+                exit;
+            } catch (Exception $e) {
                 $pdo->rollBack();
-                error_log($e->getMessage());
-                $_SESSION['error'] = "Error updating " . ($isFolder ? "folder" : "class");
+                error_log("Error updating folder: " . $e->getMessage());
+                $_SESSION['error'] = "Error updating folder: " . $e->getMessage();
+                header('Location: classes.php');
+                exit;
             }
-            header('Location: classes.php');
-            exit;
             break;
 
-        case 'delete':
+        case 'update_class':
             try {
                 $pdo->beginTransaction();
                 
-                // Get the class details to check if it's a folder
-                $stmt = $pdo->prepare("SELECT is_folder FROM classes WHERE id = ?");
-                $stmt->execute([$_POST['class_id']]);
-                $isFolder = $stmt->fetchColumn();
+                $folderId = !empty($_POST['folder_id']) ? intval($_POST['folder_id']) : null;
                 
-                $stmt = $pdo->prepare("DELETE FROM classes WHERE id = ?");
-                $stmt->execute([$_POST['class_id']]);
+                // Validate folder exists if specified
+                if ($folderId) {
+                    $checkFolder = $pdo->prepare("SELECT id FROM folders WHERE id = ?");
+                    $checkFolder->execute([$folderId]);
+                    $folder = $checkFolder->fetch(PDO::FETCH_ASSOC);
+                    
+                    if (!$folder) {
+                        throw new Exception("Folder not found");
+                    }
+                }
+                
+                // Update the class
+                $stmt = $pdo->prepare("
+                    UPDATE classes 
+                    SET name = ?, description = ?, folder_id = ?
+                    WHERE id = ?
+                ");
+                
+                if (!$stmt->execute([
+                    $_POST['name'], 
+                    $_POST['description'], 
+                    $folderId,
+                    $_POST['class_id']
+                ])) {
+                    throw new Exception("Database error updating class");
+                }
+                
                 $pdo->commit();
-                $_SESSION['success'] = $isFolder ? "Folder deleted successfully." : "Class deleted successfully.";
-            } catch (PDOException $e) {
+                $_SESSION['success'] = "Class updated successfully";
+                header('Location: classes.php');
+                exit;
+            } catch (Exception $e) {
                 $pdo->rollBack();
-                error_log($e->getMessage());
-                $_SESSION['error'] = "Error deleting " . ($isFolder ? "folder" : "class") . ".";
+                error_log("Error updating class: " . $e->getMessage());
+                $_SESSION['error'] = "Error updating class: " . $e->getMessage();
+                header('Location: classes.php');
+                exit;
             }
-            header('Location: classes.php');
-            exit;
+            break;
+
+        case 'delete_folder':
+            try {
+                $pdo->beginTransaction();
+                
+                // Update any classes that reference this folder to have null folder_id
+                $stmt = $pdo->prepare("
+                    UPDATE classes 
+                    SET folder_id = NULL 
+                    WHERE folder_id = ?
+                ");
+                $stmt->execute([$_POST['folder_id']]);
+                
+                // Delete the folder
+                $stmt = $pdo->prepare("DELETE FROM folders WHERE id = ?");
+                if (!$stmt->execute([$_POST['folder_id']])) {
+                    throw new Exception("Database error deleting folder");
+                }
+                
+                $pdo->commit();
+                $_SESSION['success'] = "Folder deleted successfully.";
+                header('Location: classes.php');
+                exit;
+            } catch (Exception $e) {
+                $pdo->rollBack();
+                error_log("Error deleting folder: " . $e->getMessage());
+                $_SESSION['error'] = "Error deleting folder: " . $e->getMessage();
+                header('Location: classes.php');
+                exit;
+            }
+            break;
+
+        case 'delete_class':
+            try {
+                $pdo->beginTransaction();
+                
+                $stmt = $pdo->prepare("DELETE FROM classes WHERE id = ? AND is_folder = 0");
+                if (!$stmt->execute([$_POST['class_id']])) {
+                    throw new Exception("Database error deleting class");
+                }
+                
+                $pdo->commit();
+                $_SESSION['success'] = "Class deleted successfully.";
+                header('Location: classes.php');
+                exit;
+            } catch (Exception $e) {
+                $pdo->rollBack();
+                error_log("Error deleting class: " . $e->getMessage());
+                $_SESSION['error'] = "Error deleting class: " . $e->getMessage();
+                header('Location: classes.php');
+                exit;
+            }
             break;
 
         case 'enroll':
             try {
                 $pdo->beginTransaction();
-                
-                // Check if we're enrolling in a folder or class
-                $stmt = $pdo->prepare("SELECT is_folder FROM classes WHERE id = ?");
-                $stmt->execute([$_POST['class_id']]);
-                $isFolder = $stmt->fetchColumn();
                 
                 // Prepare the statement for enrollment
                 $stmt = $pdo->prepare("
@@ -151,35 +332,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $studentId, 
                         $_POST['class_id'],
                         $teacherId,
-                        $isFolder,
+                        isset($_POST['is_folder_access']) ? 1 : 0,
                         $teacherId,
                         $studentId
                     ]);
-                    
-                    // If this is a folder, optionally enroll in all child classes as well
-                    if ($isFolder && isset($_POST['enroll_all_children']) && $_POST['enroll_all_children'] == '1') {
-                        $childClasses = getChildClasses($_POST['class_id'], $pdo);
-                        foreach ($childClasses as $childClass) {
-                            $stmt->execute([
-                                $studentId, 
-                                $childClass['id'],
-                                $teacherId,
-                                false, // Not folder access for individual classes
-                                $teacherId,
-                                $studentId
-                            ]);
-                        }
-                    }
                 }
                 
                 $pdo->commit();
                 $_SESSION['success'] = "Students enrolled successfully";
                 header('Location: classes.php');
                 exit;
-            } catch (PDOException $e) {
+            } catch (Exception $e) {
                 $pdo->rollBack();
-                error_log($e->getMessage());
-                $_SESSION['error'] = "Error enrolling students";
+                error_log("Error enrolling students: " . $e->getMessage());
+                $_SESSION['error'] = "Error enrolling students: " . $e->getMessage();
                 header('Location: classes.php');
                 exit;
             }
@@ -194,27 +360,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Function to get all child classes of a folder
-function getChildClasses($folderId, $pdo) {
-    $stmt = $pdo->prepare("
-        SELECT id, name, is_folder
-        FROM classes
-        WHERE parent_id = ?
-    ");
-    $stmt->execute([$folderId]);
-    $children = $stmt->fetchAll();
+// First, check if the classes table has the folder_id column and add it if not
+try {
+    // Check if folder_id column exists
+    $stmt = $pdo->query("SHOW COLUMNS FROM classes LIKE 'folder_id'");
+    $folderIdColumnExists = $stmt->rowCount() > 0;
     
-    $allChildren = [];
-    foreach ($children as $child) {
-        $allChildren[] = $child;
-        if ($child['is_folder']) {
-            // Recursively get children of folders
-            $subChildren = getChildClasses($child['id'], $pdo);
-            $allChildren = array_merge($allChildren, $subChildren);
-        }
+    if (!$folderIdColumnExists) {
+        // Add folder_id column
+        $pdo->exec("ALTER TABLE classes ADD COLUMN folder_id INT NULL");
+        $pdo->exec("ALTER TABLE classes ADD CONSTRAINT fk_class_folder FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL");
     }
-    
-    return $allChildren;
+} catch (PDOException $e) {
+    // Log the error but continue
+    error_log("Error checking or adding folder_id column: " . $e->getMessage());
 }
 
 // Handle AJAX requests for viewing enrolled students
@@ -246,16 +405,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_enrolled_students') {
     exit;
 }
 
-// Get parent folder list for dropdown
-$stmt = $pdo->prepare("
-    SELECT id, name, parent_id 
-    FROM classes 
-    WHERE is_folder = 1
-    ORDER BY name
-");
-$stmt->execute();
-$folders = $stmt->fetchAll();
-
 // Build a hierarchical folder structure
 function buildFolderHierarchy($folders, $parentId = null, $level = 0) {
     $result = [];
@@ -269,24 +418,37 @@ function buildFolderHierarchy($folders, $parentId = null, $level = 0) {
     }
     return $result;
 }
-$hierarchicalFolders = buildFolderHierarchy($folders);
 
-// Fetch classes based on role
+// Fetch all folders
+$stmt = $pdo->query("
+    SELECT f.*, u.name as creator_name, u.email as creator_email, 
+           p.name as parent_name
+    FROM folders f
+    LEFT JOIN users u ON f.created_by = u.id
+    LEFT JOIN folders p ON f.parent_id = p.id
+    ORDER BY f.name
+");
+$foldersRaw = $stmt->fetchAll();
+$hierarchicalFolders = buildFolderHierarchy($foldersRaw);
+
+// Get all classes with their folder information
 if ($_SESSION['role'] === 'teacher') {
     $stmt = $pdo->prepare("
         SELECT c.*, 
                COUNT(DISTINCT e.student_id) as student_count,
-               p.name as parent_name
+               f.name as folder_name, f.id as folder_id,
+               u.name as creator_name, u.email as creator_email
         FROM classes c 
         LEFT JOIN enrollments e ON c.id = e.class_id AND e.teacher_id = ?
         JOIN teacher_classes tc ON c.id = tc.class_id 
-        LEFT JOIN classes p ON c.parent_id = p.id
-        WHERE tc.teacher_id = ?
+        LEFT JOIN folders f ON c.folder_id = f.id
+        LEFT JOIN users u ON c.created_by = u.id
+        WHERE tc.teacher_id = ? AND c.is_folder = 0
         GROUP BY c.id 
-        ORDER BY c.is_folder DESC, c.name
+        ORDER BY c.name
     ");
     $stmt->execute([$_SESSION['user_id'], $_SESSION['user_id']]);
-    $classesRaw = $stmt->fetchAll();
+    $classes = $stmt->fetchAll();
 
     // Fetch only connected students
     $stmt = $pdo->prepare("
@@ -301,40 +463,31 @@ if ($_SESSION['role'] === 'teacher') {
     $stmt = $pdo->query("
         SELECT c.*, 
                COUNT(DISTINCT e.student_id) as student_count,
-               u.name as creator_name, u.email as creator_email,
-               p.name as parent_name
+               f.name as folder_name, f.id as folder_id,
+               u.name as creator_name, u.email as creator_email
         FROM classes c 
         LEFT JOIN enrollments e ON c.id = e.class_id 
+        LEFT JOIN folders f ON c.folder_id = f.id
         LEFT JOIN users u ON c.created_by = u.id
-        LEFT JOIN classes p ON c.parent_id = p.id
+        WHERE c.is_folder = 0
         GROUP BY c.id 
-        ORDER BY c.is_folder DESC, c.name
+        ORDER BY c.name
     ");
-    $classesRaw = $stmt->fetchAll();
+    $classes = $stmt->fetchAll();
 
     $stmt = $pdo->query("SELECT id, name, email FROM users WHERE role = 'student' ORDER BY name");
 }
 $students = $stmt->fetchAll();
 
-// Build hierarchical class structure
-function buildClassHierarchy($classes, $parentId = null, $level = 0) {
-    $result = [];
-    foreach ($classes as $class) {
-        if ($class['parent_id'] == $parentId) {
-            $class['level'] = $level;
-            $result[] = $class;
-            if ($class['is_folder']) {
-                $children = buildClassHierarchy($classes, $class['id'], $level + 1);
-                $result = array_merge($result, $children);
-            }
-        }
+// Group classes by folder
+$classesByFolder = [];
+foreach ($classes as $class) {
+    $folderId = $class['folder_id'] ?? 'none';
+    if (!isset($classesByFolder[$folderId])) {
+        $classesByFolder[$folderId] = [];
     }
-    return $result;
+    $classesByFolder[$folderId][] = $class;
 }
-
-// Build the hierarchical class structure
-$classes = buildClassHierarchy($classesRaw);
-
 ?>
 
 <!DOCTYPE html>
@@ -345,6 +498,20 @@ $classes = buildClassHierarchy($classesRaw);
     <title>Classes & Folders Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .folder-icon {
+            color: #f6c23e;
+        }
+        .class-icon {
+            color: #5a5cd1;
+        }
+        .nested-item {
+            transition: background-color 0.2s;
+        }
+        .nested-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+    </style>
 </head>
 <body class="bg-gray-50">
     <!-- Navigation -->
@@ -378,90 +545,247 @@ $classes = buildClassHierarchy($classesRaw);
             </div>
         </div>
 
-        <!-- Classes List -->
+        <!-- Unified Hierarchical View -->
         <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parent</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            <?php if ($_SESSION['role'] !== 'teacher'): ?>Created By<?php endif; ?>
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Students</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    <?php foreach ($classes as $class): ?>
-                    <tr class="<?= $class['is_folder'] ? 'bg-blue-50' : '' ?>">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            <div style="padding-left: <?= $class['level'] * 20 ?>px;">
-                                <?php if ($class['is_folder']): ?>
-                                    <i class="fas fa-folder text-yellow-500 mr-2"></i>
-                                <?php else: ?>
-                                    <i class="fas fa-book text-indigo-500 mr-2"></i>
+            <div class="px-4 py-5 border-b border-gray-200 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    Folder Structure and Classes
+                </h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                    Manage your folders and classes in a hierarchical structure
+                </p>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Name
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Type
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <?php if ($_SESSION['role'] !== 'teacher'): ?>Created By<?php endif; ?>
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Description
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Students
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <?php
+                        // Recursive function to display folders and their contents
+                        function displayFolderAndClassesHierarchy($folders, $classesByFolder, $parentId = null, $level = 0) {
+                            // First display all folders at current level
+                            foreach ($folders as $folder) {
+                                if ($folder['parent_id'] == $parentId) {
+                                    ?>
+                                    <tr class="bg-blue-50 nested-item">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            <div style="padding-left: <?= $level * 20 ?>px;">
+                                                <i class="fas fa-folder folder-icon mr-2"></i>
+                                                <?= htmlspecialchars($folder['name']) ?>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            Folder
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <?php if ($_SESSION['role'] !== 'teacher'): ?>
+                                                <?= htmlspecialchars($folder['creator_name']) ?>
+                                                (<?= htmlspecialchars($folder['creator_email']) ?>)
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">
+                                            <?= htmlspecialchars($folder['description']) ?>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            -
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button onclick="openEditFolderModal(<?= htmlspecialchars(json_encode($folder)) ?>)" 
+                                                    class="text-indigo-600 hover:text-indigo-900">Edit</button>
+                                            <button onclick="confirmDeleteFolder(<?= $folder['id'] ?>)" 
+                                                    class="ml-4 text-red-600 hover:text-red-900">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <?php
+                                    
+                                    // Display classes in this folder if any
+                                    if (isset($classesByFolder[$folder['id']])) {
+                                        foreach ($classesByFolder[$folder['id']] as $class) {
+                                            ?>
+                                            <tr class="nested-item">
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                    <div style="padding-left: <?= ($level + 1) * 20 ?>px;">
+                                                        <i class="fas fa-book class-icon mr-2"></i>
+                                                        <?= htmlspecialchars($class['name']) ?>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    Class
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <?php if ($_SESSION['role'] !== 'teacher'): ?>
+                                                        <?= htmlspecialchars($class['creator_name']) ?>
+                                                        (<?= htmlspecialchars($class['creator_email']) ?>)
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td class="px-6 py-4 text-sm text-gray-500">
+                                                    <?= htmlspecialchars($class['description']) ?>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <button onclick="viewStudents(<?= $class['id'] ?>)" class="text-indigo-600 hover:text-indigo-900">
+                                                        <?= $class['student_count'] ?> students
+                                                    </button>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                    <button onclick="openEnrollModal(<?= $class['id'] ?>)" 
+                                                            class="text-green-600 hover:text-green-900">Enroll</button>
+                                                    <button onclick="openEditClassModal(<?= htmlspecialchars(json_encode($class)) ?>)" 
+                                                            class="ml-2 text-indigo-600 hover:text-indigo-900">Edit</button>
+                                                    <button onclick="confirmDeleteClass(<?= $class['id'] ?>)" 
+                                                            class="ml-2 text-red-600 hover:text-red-900">Delete</button>
+                                                </td>
+                                            </tr>
+                                            <?php
+                                        }
+                                    }
+                                    
+                                    // Recursively display child folders
+                                    displayFolderAndClassesHierarchy($folders, $classesByFolder, $folder['id'], $level + 1);
+                                }
+                            }
+                        }
+
+                        // Display the hierarchy starting from root folders
+                        displayFolderAndClassesHierarchy($foldersRaw, $classesByFolder);
+                        
+                        // Display classes not in any folder
+                        if (isset($classesByFolder['none']) && !empty($classesByFolder['none'])):
+                        ?>
+                        <tr class="bg-gray-100">
+                            <td colspan="6" class="px-6 py-3 text-sm font-medium text-gray-500">
+                                Classes (Not in folders)
+                            </td>
+                        </tr>
+                        <?php foreach ($classesByFolder['none'] as $class): ?>
+                        <tr class="nested-item">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                <div style="padding-left: 20px;">
+                                    <i class="fas fa-book class-icon mr-2"></i>
+                                    <?= htmlspecialchars($class['name']) ?>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                Class
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <?php if ($_SESSION['role'] !== 'teacher'): ?>
+                                    <?= htmlspecialchars($class['creator_name']) ?>
+                                    (<?= htmlspecialchars($class['creator_email']) ?>)
                                 <?php endif; ?>
-                                <?= htmlspecialchars($class['name']) ?>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-500">
-                            <?= $class['is_folder'] ? 'Folder' : 'Class' ?>
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-500">
-                            <?= $class['parent_name'] ? htmlspecialchars($class['parent_name']) : '-' ?>
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-500">
-                            <?php if ($_SESSION['role'] !== 'teacher'): ?>
-                                <?= htmlspecialchars($class['creator_name']) ?>  
-                                (<?= htmlspecialchars($class['creator_email']) ?>)
-                            <?php endif; ?>
-                        </td>
-                        <input type="hidden" name="ClassteacherId" id="ClassteacherId" value="<?= htmlspecialchars($class['created_by']) ?>">
-                        <td class="px-6 py-4 text-sm text-gray-500">
-                            <?= htmlspecialchars($class['description']) ?>
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-500">
-                            <button onclick="viewStudents(<?= $class['id'] ?>)" class="text-indigo-600 hover:text-indigo-900">
-                                <?= $class['student_count'] ?> students
-                            </button>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button onclick="openEnrollModal(<?= $class['id'] ?>, <?= $class['is_folder'] ? 'true' : 'false' ?>)" 
-                                    class="text-green-600 hover:text-green-900">Enroll</button>
-                            <button onclick="openEditModal(<?= htmlspecialchars(json_encode($class)) ?>)" 
-                                    class="ml-4 text-indigo-600 hover:text-indigo-900">Edit</button>
-                            <button onclick="confirmDelete(<?= $class['id'] ?>, '<?= $class['is_folder'] ? 'folder' : 'class' ?>')" 
-                                    class="ml-4 text-red-600 hover:text-red-900">Delete</button>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-500">
+                                <?= htmlspecialchars($class['description']) ?>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <button onclick="viewStudents(<?= $class['id'] ?>)" class="text-indigo-600 hover:text-indigo-900">
+                                    <?= $class['student_count'] ?> students
+                                </button>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button onclick="openEnrollModal(<?= $class['id'] ?>)" 
+                                        class="text-green-600 hover:text-green-900">Enroll</button>
+                                <button onclick="openEditClassModal(<?= htmlspecialchars(json_encode($class)) ?>)" 
+                                        class="ml-2 text-indigo-600 hover:text-indigo-900">Edit</button>
+                                <button onclick="confirmDeleteClass(<?= $class['id'] ?>)" 
+                                        class="ml-2 text-red-600 hover:text-red-900">Delete</button>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <!-- Add Class/Folder Modal -->
-    <div id="classModal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+    <!-- Add Folder Modal -->
+    <div id="folderModal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
         <div class="bg-white rounded-lg p-8 max-w-md w-full">
             <form method="POST">
-                <input type="hidden" name="action" id="formAction" value="create">
-                <input type="hidden" name="class_id" id="classId">
-                <input type="hidden" name="is_folder" id="isFolder" value="0">
+                <input type="hidden" name="action" id="folderFormAction" value="create_folder">
+                <input type="hidden" name="folder_id" id="folderId">
                 
-                <h3 id="modalTitle" class="text-lg font-medium text-gray-900 mb-4">Add New Class</h3>
+                <h3 id="folderModalTitle" class="text-lg font-medium text-gray-900 mb-4">Add New Folder</h3>
                 
                 <div class="space-y-4">
                     <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
-                        <input type="text" name="name" id="className" required
+                        <label for="name" class="block text-sm font-medium text-gray-700">Folder Name</label>
+                        <input type="text" name="name" id="folderName" required
                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     </div>
                     <div>
                         <label for="parent_id" class="block text-sm font-medium text-gray-700">Parent Folder (Optional)</label>
-                        <select name="parent_id" id="parentFolder" 
+                        <select name="parent_id" id="parentFolderId" 
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="">-- None (Root Level) --</option>
+                            <?php foreach ($hierarchicalFolders as $folder): ?>
+                                <option value="<?= $folder['id'] ?>">
+                                    <?= str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $folder['level']) ?>
+                                    <?= htmlspecialchars($folder['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                        <textarea name="description" id="folderDescription" rows="3" required
+                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" onclick="closeModal('folderModal')"
+                            class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
+                        Save
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Class Modal -->
+    <div id="classModal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+        <div class="bg-white rounded-lg p-8 max-w-md w-full">
+            <form method="POST">
+                <input type="hidden" name="action" id="classFormAction" value="create_class">
+                <input type="hidden" name="class_id" id="classId">
+                
+                <h3 id="classModalTitle" class="text-lg font-medium text-gray-900 mb-4">Add New Class</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700">Class Name</label>
+                        <input type="text" name="name" id="className" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="folder_id" class="block text-sm font-medium text-gray-700">Folder (Optional)</label>
+                        <select name="folder_id" id="folderIdSelect" 
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                             <option value="">-- None (Root Level) --</option>
                             <?php foreach ($hierarchicalFolders as $folder): ?>
@@ -497,20 +821,10 @@ $classes = buildClassHierarchy($classesRaw);
     <div id="enrollModal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
         <div class="bg-white rounded-lg p-8 max-w-md w-full">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Enroll Students</h3>
-            <form method="POST" >
+            <form method="POST">
                 <input type="hidden" name="action" value="enroll">
                 <input type="hidden" name="class_id" id="enrollClassId">
                 <input type="hidden" name="teacherID" id="teacherID">
-                
-                <div id="folderEnrollOptions" class="mb-4 hidden">
-                    <div class="flex items-center">
-                        <input type="checkbox" name="enroll_all_children" value="1" id="enrollAllChildren" 
-                               class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                        <label for="enrollAllChildren" class="ml-2 block text-sm text-gray-900">
-                            Enroll in all classes within this folder
-                        </label>
-                    </div>
-                </div>
                 
                 <div class="space-y-4">
                     <input type="text" id="studentSearch" placeholder="Search students..." 
@@ -560,29 +874,37 @@ $classes = buildClassHierarchy($classesRaw);
 
     <script>
         function openAddModal(type) {
-            document.getElementById('modalTitle').textContent = type === 'folder' ? 'Add New Folder' : 'Add New Class';
-            document.getElementById('formAction').value = 'create';
-            document.getElementById('classId').value = '';
-            document.getElementById('className').value = '';
-            document.getElementById('classDescription').value = '';
-            document.getElementById('parentFolder').selectedIndex = 0;
-            document.getElementById('isFolder').value = type === 'folder' ? '1' : '0';
-            document.getElementById('classModal').classList.remove('hidden');
+            if (type === 'folder') {
+                document.getElementById('folderModalTitle').textContent = 'Add New Folder';
+                document.getElementById('folderFormAction').value = 'create_folder';
+                document.getElementById('folderId').value = '';
+                document.getElementById('folderName').value = '';
+                document.getElementById('folderDescription').value = '';
+                document.getElementById('parentFolderId').selectedIndex = 0;
+                document.getElementById('folderModal').classList.remove('hidden');
+            } else {
+                document.getElementById('classModalTitle').textContent = 'Add New Class';
+                document.getElementById('classFormAction').value = 'create_class';
+                document.getElementById('classId').value = '';
+                document.getElementById('className').value = '';
+                document.getElementById('classDescription').value = '';
+                document.getElementById('folderIdSelect').selectedIndex = 0;
+                document.getElementById('classModal').classList.remove('hidden');
+            }
         }
 
-        function openEditModal(classData) {
-            document.getElementById('modalTitle').textContent = classData.is_folder == 1 ? 'Edit Folder' : 'Edit Class';
-            document.getElementById('formAction').value = 'update';
-            document.getElementById('classId').value = classData.id;
-            document.getElementById('className').value = classData.name;
-            document.getElementById('classDescription').value = classData.description;
-            document.getElementById('isFolder').value = classData.is_folder;
+        function openEditFolderModal(folder) {
+            document.getElementById('folderModalTitle').textContent = 'Edit Folder';
+            document.getElementById('folderFormAction').value = 'update_folder';
+            document.getElementById('folderId').value = folder.id;
+            document.getElementById('folderName').value = folder.name;
+            document.getElementById('folderDescription').value = folder.description;
             
             // Set parent folder selection
-            const parentSelect = document.getElementById('parentFolder');
-            if (classData.parent_id) {
+            const parentSelect = document.getElementById('parentFolderId');
+            if (folder.parent_id) {
                 for (let i = 0; i < parentSelect.options.length; i++) {
-                    if (parentSelect.options[i].value == classData.parent_id) {
+                    if (parentSelect.options[i].value == folder.parent_id) {
                         parentSelect.selectedIndex = i;
                         break;
                     }
@@ -591,21 +913,35 @@ $classes = buildClassHierarchy($classesRaw);
                 parentSelect.selectedIndex = 0;
             }
             
+            document.getElementById('folderModal').classList.remove('hidden');
+        }
+
+        function openEditClassModal(classObj) {
+            document.getElementById('classModalTitle').textContent = 'Edit Class';
+            document.getElementById('classFormAction').value = 'update_class';
+            document.getElementById('classId').value = classObj.id;
+            document.getElementById('className').value = classObj.name;
+            document.getElementById('classDescription').value = classObj.description;
+            
+            // Set folder selection
+            const folderSelect = document.getElementById('folderIdSelect');
+            if (classObj.folder_id) {
+                for (let i = 0; i < folderSelect.options.length; i++) {
+                    if (folderSelect.options[i].value == classObj.folder_id) {
+                        folderSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            } else {
+                folderSelect.selectedIndex = 0;
+            }
+            
             document.getElementById('classModal').classList.remove('hidden');
         }
 
-        function openEnrollModal(classId, isFolder) {
+        function openEnrollModal(classId) {
             document.getElementById('enrollClassId').value = classId;
             document.getElementById('teacherID').value = document.getElementById('ClassteacherId').value;
-            
-            // Show or hide folder-specific options
-            const folderOptions = document.getElementById('folderEnrollOptions');
-            if (isFolder) {
-                folderOptions.classList.remove('hidden');
-            } else {
-                folderOptions.classList.add('hidden');
-            }
-            
             document.getElementById('enrollModal').classList.remove('hidden');
         }
 
@@ -638,15 +974,27 @@ $classes = buildClassHierarchy($classesRaw);
             document.getElementById(modalId).classList.add('hidden');
         }
 
-        function confirmDelete(id, type) {
-            const message = `Are you sure you want to delete this ${type}?`;
-            const warning = type === 'folder' ? '\n\nWARNING: This will also delete all classes and subfolders inside it!' : '';
+        function confirmDeleteFolder(id) {
+            const message = "Are you sure you want to delete this folder?\n\nWARNING: Classes in this folder will be moved to root level.";
             
-            if (confirm(message + warning)) {
+            if (confirm(message)) {
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.innerHTML = `
-                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="action" value="delete_folder">
+                    <input type="hidden" name="folder_id" value="${id}">
+                `;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        function confirmDeleteClass(id) {
+            if (confirm('Are you sure you want to delete this class?')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.innerHTML = `
+                    <input type="hidden" name="action" value="delete_class">
                     <input type="hidden" name="class_id" value="${id}">
                 `;
                 document.body.appendChild(form);
@@ -683,7 +1031,7 @@ $classes = buildClassHierarchy($classesRaw);
 
         // Close modals when clicking outside
         window.onclick = function(event) {
-            const modals = ['classModal', 'enrollModal', 'viewStudentsModal'];
+            const modals = ['folderModal', 'classModal', 'enrollModal', 'viewStudentsModal'];
             modals.forEach(modalId => {
                 const modal = document.getElementById(modalId);
                 if (event.target === modal) {
@@ -695,7 +1043,7 @@ $classes = buildClassHierarchy($classesRaw);
         // Handle escape key to close modals
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
-                const modals = ['classModal', 'enrollModal', 'viewStudentsModal'];
+                const modals = ['folderModal', 'classModal', 'enrollModal', 'viewStudentsModal'];
                 modals.forEach(modalId => {
                     const modal = document.getElementById(modalId);
                     if (!modal.classList.contains('hidden')) {
